@@ -1,0 +1,13 @@
+{
+  "name": "agriconnect-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx --yes concurrently \"npm run dev --prefix AgriConnect/server\" \"npm run dev --prefix AgriConnect/client\"",
+    "dev:server": "npm run dev --prefix AgriConnect/server",
+    "dev:client": "npm run dev --prefix AgriConnect/client",
+    "install:client": "npm install --prefix AgriConnect/client",
+    "install:server": "npm install --prefix AgriConnect/server",
+    "install:all": "npm install --prefix AgriConnect/server; npm install --prefix AgriConnect/client"
+  }
+}
