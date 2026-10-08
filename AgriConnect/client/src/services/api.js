@@ -2,10 +2,10 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 /**
- * Generic fetch wrapper with support for JSON request/response handling and authorization headers.
+ * Reusable fetch wrapper with automatic JWT Authorization header attachment
  */
 export async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem('agri_token');
+  const token = localStorage.getItem('agriconnect_token') || localStorage.getItem('agri_token');
 
   const headers = {
     'Content-Type': 'application/json',
@@ -21,7 +21,7 @@ export async function apiRequest(endpoint, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = new Error(data.message || 'API request failed');
+    const error = new Error(data.message || data.error || 'API request failed');
     error.status = response.status;
     error.data = data;
     throw error;
@@ -29,5 +29,41 @@ export async function apiRequest(endpoint, options = {}) {
 
   return data;
 }
+
+// Authentication & User API Service Functions
+export const authApi = {
+  // Register new Farmer or Worker account
+  register: (userData) => apiRequest('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData)
+  }),
+
+  // Login user with credentials
+  login: (credentials) => apiRequest('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials)
+  }),
+
+  // Get current authenticated user profile
+  getCurrentUser: () => apiRequest('/auth/me', {
+    method: 'GET'
+  }),
+
+  // Logout user
+  logout: () => apiRequest('/auth/logout', {
+    method: 'POST'
+  }),
+
+  // Get user profile
+  getUserProfile: () => apiRequest('/users/profile', {
+    method: 'GET'
+  }),
+
+  // Update user profile
+  updateUserProfile: (profileData) => apiRequest('/users/profile', {
+    method: 'PUT',
+    body: JSON.stringify(profileData)
+  })
+};
 
 export default apiRequest;

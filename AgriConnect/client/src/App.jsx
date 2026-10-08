@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AgriProvider, useAgri } from './context/AgriContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/common/Navbar';
 import LandingPage from './pages/public/LandingPage';
 import FarmerDashboard from './pages/farmer/FarmerDashboard';
@@ -7,9 +8,14 @@ import WorkerDashboard from './pages/worker/WorkerDashboard';
 import Footer from './components/common/Footer';
 import AuthModal from './pages/auth/AuthModal';
 import AIAssistantWidget from './components/common/AIAssistantWidget';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function MainApp() {
-  const { currentUser } = useAgri();
+  const { currentUser: agriUser } = useAgri();
+  const { currentUser: authUser } = useAuth();
+  
+  const currentUser = authUser || agriUser;
+
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [selectedRole, setSelectedRole] = useState('farmer');
@@ -39,9 +45,13 @@ function MainApp() {
             onOpenAuth={handleOpenAuth} 
           />
         ) : currentUser.role === 'farmer' ? (
-          <FarmerDashboard />
+          <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+            <FarmerDashboard />
+          </ProtectedRoute>
         ) : (
-          <WorkerDashboard />
+          <ProtectedRoute allowedRoles={['worker']} onOpenAuth={handleOpenAuth}>
+            <WorkerDashboard />
+          </ProtectedRoute>
         )}
       </main>
 
@@ -64,8 +74,10 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AgriProvider>
-      <MainApp />
-    </AgriProvider>
+    <AuthProvider>
+      <AgriProvider>
+        <MainApp />
+      </AgriProvider>
+    </AuthProvider>
   );
 }

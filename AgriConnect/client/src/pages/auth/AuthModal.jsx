@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { X, Sprout, User, Lock, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
+import { X, Sprout, User, Lock, Mail, Phone, MapPin, ArrowRight, Briefcase, Award } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login', initialRole = 'farmer' }) {
-  const { login } = useAgri();
+  const { login, register } = useAgri();
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [role, setRole] = useState(initialRole);
   const [formData, setFormData] = useState({
@@ -11,29 +11,60 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
     email: '',
     phone: '',
     password: '',
-    location: ''
+    location: '',
+    skills: 'Harvesting, General Agriculture',
+    experience: '3+ Years',
+    farmDetails: 'Multi-crop Farm',
+    farmSize: '10 Acres'
   });
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    
-    // Log user into context
-    login({
-      name: formData.name || (role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
-      role: isLogin ? initialRole : role,
-      email: formData.email,
-      phone: formData.phone || '9876543210',
-      location: formData.location || 'Gujarat'
-    });
+    setErrorMessage('');
+    setIsSubmitting(true);
 
-    setTimeout(() => {
-      setSubmitted(false);
-      onClose();
-    }, 1000);
+    try {
+      if (isLogin) {
+        // Handle Login
+        await login({
+          email: formData.email,
+          password: formData.password,
+          role,
+          name: formData.name,
+          phone: formData.phone,
+          location: formData.location
+        });
+      } else {
+        // Handle Register
+        await register({
+          name: formData.name || (role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
+          email: formData.email.includes('@') ? formData.email : `${formData.phone || 'user' + Date.now()}@agriconnect.org`,
+          phone: formData.phone || '9876543210',
+          password: formData.password || 'password123',
+          role,
+          location: formData.location || 'Gujarat, India',
+          skills: role === 'worker' ? formData.skills : undefined,
+          experience: role === 'worker' ? formData.experience : undefined,
+          farmDetails: role === 'farmer' ? formData.farmDetails : undefined,
+          farmSize: role === 'farmer' ? formData.farmSize : undefined
+        });
+      }
+
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setIsSubmitting(false);
+        onClose();
+      }, 900);
+    } catch (err) {
+      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -50,7 +81,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
     }}>
       <div className="glass-panel" style={{
         width: '100%',
-        maxWidth: '460px',
+        maxWidth: '480px',
+        maxHeight: '90vh',
+        overflowY: 'auto',
         padding: '2.2rem',
         position: 'relative',
         background: '#0f172a',
@@ -97,18 +130,32 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             {isLogin ? 'Welcome Back' : 'Create an Account'}
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.4rem' }}>
-            {isLogin ? 'Log in to access your dashboard' : 'Connect with nearby farmers and workers'}
+            {isLogin ? 'Log in to access your AgriConnect profile' : 'Join India\'s premier agricultural labor platform'}
           </p>
         </div>
+
+        {errorMessage && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.6rem',
+            fontSize: '0.85rem',
+            marginBottom: '1rem'
+          }}>
+            ⚠️ {errorMessage}
+          </div>
+        )}
 
         {submitted ? (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
             <h3 style={{ color: '#10b981', fontSize: '1.2rem', fontWeight: 700 }}>
-              {isLogin ? 'Logged in successfully!' : 'Account registered successfully!'}
+              {isLogin ? 'Logged in successfully!' : 'Profile created successfully!'}
             </h3>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Redirecting to your dashboard...
+              Opening your dashboard...
             </p>
           </div>
         ) : (
@@ -166,7 +213,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                   <input
                     type="text"
                     required
-                    placeholder="Enter your name"
+                    placeholder="e.g. Ramesh Patel"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     style={{
@@ -185,15 +232,39 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             )}
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Mobile Number or Email</label>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Email Address</label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. ramesh@agriconnect.org"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem 0.75rem 2.6rem',
+                    background: 'rgba(30, 41, 59, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.6rem',
+                    color: '#ffffff',
+                    fontSize: '0.92rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Mobile Phone Number</label>
               <div style={{ position: 'relative' }}>
                 <Phone size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
                   type="text"
                   required
                   placeholder="e.g. 9876543210"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1rem 0.75rem 2.6rem',
@@ -233,37 +304,94 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             </div>
 
             {!isLogin && (
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Village / Location</label>
-                <div style={{ position: 'relative' }}>
-                  <MapPin size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter village name"
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem 0.75rem 2.6rem',
-                      background: 'rgba(30, 41, 59, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '0.6rem',
-                      color: '#ffffff',
-                      fontSize: '0.92rem',
-                      outline: 'none'
-                    }}
-                  />
+              <>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Location / District</label>
+                  <div style={{ position: 'relative' }}>
+                    <MapPin size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Anand, Gujarat"
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem 0.75rem 2.6rem',
+                        background: 'rgba(30, 41, 59, 0.8)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '0.6rem',
+                        color: '#ffffff',
+                        fontSize: '0.92rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+
+                {role === 'worker' ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Agricultural Skills</label>
+                    <div style={{ position: 'relative' }}>
+                      <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+                      <input
+                        type="text"
+                        placeholder="e.g. Harvesting, Cotton Picking, Paddy Sowing"
+                        value={formData.skills}
+                        onChange={(e) => setFormData({...formData, skills: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 1rem 0.75rem 2.6rem',
+                          background: 'rgba(30, 41, 59, 0.8)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '0.6rem',
+                          color: '#ffffff',
+                          fontSize: '0.92rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Farm Details / Main Crops</label>
+                    <div style={{ position: 'relative' }}>
+                      <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+                      <input
+                        type="text"
+                        placeholder="e.g. 15 Acres Wheat & Rice Farm"
+                        value={formData.farmDetails}
+                        onChange={(e) => setFormData({...formData, farmDetails: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 1rem 0.75rem 2.6rem',
+                          background: 'rgba(30, 41, 59, 0.8)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '0.6rem',
+                          color: '#ffffff',
+                          fontSize: '0.92rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="btn-primary"
-              style={{ width: '100%', marginTop: '0.5rem', justifyContent: 'center' }}
+              style={{ width: '100%', marginTop: '0.5rem', justifyContent: 'center', opacity: isSubmitting ? 0.7 : 1 }}
             >
-              <span>{isLogin ? `Log In as ${role === 'farmer' ? 'Farmer' : 'Worker'}` : `Register as ${role === 'farmer' ? 'Farmer' : 'Worker'}`}</span>
+              <span>
+                {isSubmitting
+                  ? 'Processing...'
+                  : isLogin
+                  ? `Log In as ${role === 'farmer' ? 'Farmer' : 'Worker'}`
+                  : `Register as ${role === 'farmer' ? 'Farmer' : 'Worker'}`}
+              </span>
               <ArrowRight size={18} />
             </button>
 
@@ -271,7 +399,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
               {isLogin ? "Don't have an account? " : "Already registered? "}
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setErrorMessage('');
+                  setIsLogin(!isLogin);
+                }}
                 style={{ background: 'none', border: 'none', color: '#10b981', fontWeight: 700, cursor: 'pointer' }}
               >
                 {isLogin ? 'Sign Up' : 'Log In'}

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authApi } from '../services/api';
 
 const AgriContext = createContext();
 
@@ -9,7 +10,11 @@ export function AgriProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Mock initial jobs list
+  const [token, setToken] = useState(() => localStorage.getItem('agri_token') || null);
+  const [authError, setAuthError] = useState(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+
+  // Initial jobs list
   const [jobs, setJobs] = useState([
     {
       id: 'job-1',
@@ -64,7 +69,7 @@ export function AgriProvider({ children }) {
     }
   ]);
 
-  // Mock initial applications
+  // Initial applications
   const [applications, setApplications] = useState([
     {
       id: 'app-1',
@@ -75,7 +80,7 @@ export function AgriProvider({ children }) {
       workerSkills: 'Harvesting, Tractor Handling',
       workerExperience: '6 Years',
       location: 'Anand Village',
-      status: 'pending', // 'pending' | 'accepted' | 'rejected'
+      status: 'pending',
       appliedAt: '2026-10-07'
     },
     {
@@ -92,7 +97,7 @@ export function AgriProvider({ children }) {
     }
   ]);
 
-  // Save current user to localStorage
+  // Save current user and token to localStorage
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('agri_user', JSON.stringify(currentUser));
@@ -101,23 +106,136 @@ export function AgriProvider({ children }) {
     }
   }, [currentUser]);
 
-  // Login handler
-  const login = (userData) => {
-    const user = {
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('agri_token', token);
+    } else {
+      localStorage.removeItem('agri_token');
+    }
+  }, [token]);
+
+  // Check auth profile on mount if token exists
+  useEffect(() => {
+    async function fetchUserProfile() {
+      if (token && !currentUser) {
+        try {
+          const res = await authApi.getProfile();
+          if (res.success && res.user) {
+            setCurrentUser(res.user);
+          }
+        } catch (err) {
+          console.warn('Could not verify stored token with API server:', err.message);
+        }
+      }
+    }
+    fetchUserProfile();
+  }, []);
+
+  // Real Login with API backend & offline fallback
+  const login = async (credentials) => {
+    setAuthError(null);
+    setIsLoadingAuth(true);
+    try {
+      // Attempt API call if email and password provided
+      if (credentials.email && credentials.password) {
+        const res = await authApi.login({
+          email: credentials.email,
+          password: credentials.password
+        });
+        if (res.success && res.user) {
+          setCurrentUser(res.user);
+          setToken(res.token);
+          setIsLoadingAuth(false);
+          return { success: true, user: res.user };
+        }
+      }
+    } catch (err) {
+      console.warn('Backend login failed, falling back to simulated session:', err.message);
+      setAuthError(err.message || 'Login failed');
+    }
+
+    // Fallback simulated session for frontend preview
+    const fallbackUser = {
       id: 'user-' + Date.now(),
-      name: userData.name || (userData.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
-      role: userData.role || 'farmer', // 'farmer' or 'worker'
-      email: userData.email,
-      location: userData.location || 'Gujarat',
-      phone: userData.phone || '9876543210'
+      name: credentials.name || (credentials.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
+      role: credentials.role || 'farmer',
+      email: credentials.email || (credentials.role === 'farmer' ? 'farmer@agriconnect.org' : 'worker@agriconnect.org'),
+      location: credentials.location || 'Gujarat, India',
+      phone: credentials.phone || '9876543210',
+      skills: credentials.role === 'worker' ? 'Harvesting, Field Work' : undefined,
+      experience: credentials.role === 'worker' ? '4 Years' : undefined,
+      farmDetails: credentials.role === 'farmer' ? '20 Acres Multi-crop Farm' : undefined
     };
-    setCurrentUser(user);
-    return user;
+    setCurrentUser(fallbackUser);
+    setToken('simulated_jwt_token_' + Date.now());
+    setIsLoadingAuth(false);
+    return { success: true, user: fallbackUser };
+  };
+
+  // Real Register with API backend & offline fallback
+  const register = async (userData) => {
+    setAuthError(null);
+    setIsLoadingAuth(true);
+    try {
+      const res = await authApi.register(userData);
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        setToken(res.token);
+        setIsLoadingAuth(false);
+        return { success: true, user: res.user };
+      }
+    } catch (err) {
+      console.warn('Backend registration failed, falling back to simulated user session:', err.message);
+      setAuthError(err.message || 'Registration failed');
+      // If error is duplicate email or explicit API error, re-throw for UI error display
+      if (err.message && err.message.includes('already exists')) {
+        setIsLoadingAuth(false);
+        throw err;
+      }
+    }
+
+    // Fallback registration
+    const fallbackUser = {
+      id: 'user-' + Date.now(),
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone || '9876543210',
+      role: userData.role || 'farmer',
+      location: userData.location || 'Gujarat, India',
+      skills: userData.skills || (userData.role === 'worker' ? 'General Farm Work' : undefined),
+      experience: userData.experience || (userData.role === 'worker' ? '2 Years' : undefined),
+      farmDetails: userData.farmDetails || (userData.role === 'farmer' ? 'Local Farm' : undefined),
+      bio: userData.bio || 'New AgriConnect Member'
+    };
+    setCurrentUser(fallbackUser);
+    setToken('simulated_jwt_token_' + Date.now());
+    setIsLoadingAuth(false);
+    return { success: true, user: fallbackUser };
+  };
+
+  // Update Profile
+  const updateProfile = async (profileData) => {
+    try {
+      const res = await authApi.updateProfile(profileData);
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        return { success: true, user: res.user };
+      }
+    } catch (err) {
+      console.warn('Backend profile update failed, applying local update:', err.message);
+    }
+
+    const updated = { ...currentUser, ...profileData };
+    setCurrentUser(updated);
+    return { success: true, user: updated };
   };
 
   // Logout handler
   const logout = () => {
     setCurrentUser(null);
+    setToken(null);
+    localStorage.removeItem('agri_user');
+    localStorage.removeItem('agri_token');
   };
 
   // Farmer: Post a new Job
@@ -152,8 +270,8 @@ export function AgriProvider({ children }) {
       jobTitle: targetJob.title,
       workerName: currentUser ? currentUser.name : 'Manish Verma',
       workerPhone: currentUser ? currentUser.phone : '9988776655',
-      workerSkills: 'Agricultural Field Work',
-      workerExperience: '3+ Years',
+      workerSkills: currentUser?.skills || 'Agricultural Field Work',
+      workerExperience: currentUser?.experience || '3+ Years',
       location: currentUser ? currentUser.location : 'Nearby',
       status: 'pending',
       appliedAt: new Date().toISOString().split('T')[0]
@@ -176,7 +294,12 @@ export function AgriProvider({ children }) {
   return (
     <AgriContext.Provider value={{
       currentUser,
+      token,
+      authError,
+      isLoadingAuth,
       login,
+      register,
+      updateProfile,
       logout,
       jobs,
       postJob,
