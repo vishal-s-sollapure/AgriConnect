@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AgriProvider, useAgri } from './context/AgriContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/common/Navbar';
 import LandingPage from './pages/public/LandingPage';
 import FarmerDashboard from './pages/farmer/FarmerDashboard';
+import CreateJob from './pages/farmer/CreateJob';
+import MyJobs from './pages/farmer/MyJobs';
+import JobDetails from './pages/farmer/JobDetails';
+import EditJob from './pages/farmer/EditJob';
 import WorkerDashboard from './pages/worker/WorkerDashboard';
 import Footer from './components/common/Footer';
 import AuthModal from './pages/auth/AuthModal';
@@ -37,28 +42,91 @@ function MainApp() {
       {/* Navigation Header */}
       <Navbar onOpenAuth={handleOpenAuth} />
 
-      {/* Main Content View */}
+      {/* Main Content Router */}
       <main style={{ flex: 1 }}>
-        {!currentUser ? (
-          <LandingPage 
-            onSelectRole={handleRoleSelect} 
-            onOpenAuth={handleOpenAuth} 
+        <Routes>
+          {/* Home / Landing Page */}
+          <Route 
+            path="/" 
+            element={
+              !currentUser ? (
+                <LandingPage 
+                  onSelectRole={handleRoleSelect} 
+                  onOpenAuth={handleOpenAuth} 
+                />
+              ) : currentUser.role === 'farmer' ? (
+                <Navigate to="/farmer" replace />
+              ) : (
+                <Navigate to="/worker" replace />
+              )
+            } 
           />
-        ) : currentUser.role === 'farmer' ? (
-          <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
-            <FarmerDashboard />
-          </ProtectedRoute>
-        ) : (
-          <ProtectedRoute allowedRoles={['worker']} onOpenAuth={handleOpenAuth}>
-            <WorkerDashboard />
-          </ProtectedRoute>
-        )}
+
+          {/* Farmer Portal Protected Routes */}
+          <Route 
+            path="/farmer" 
+            element={
+              <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+                <FarmerDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/farmer/jobs" 
+            element={
+              <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+                <MyJobs />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/farmer/jobs/new" 
+            element={
+              <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+                <CreateJob />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/farmer/jobs/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+                <JobDetails />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/farmer/jobs/:id/edit" 
+            element={
+              <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+                <EditJob />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Worker Portal Protected Routes */}
+          <Route 
+            path="/worker" 
+            element={
+              <ProtectedRoute allowedRoles={['worker']} onOpenAuth={handleOpenAuth}>
+                <WorkerDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Catch-all redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Footer */}
       <Footer />
 
-      {/* Floating AI Voice & Multilingual Layer Widget */}
+      {/* Floating AI Voice Layer Widget */}
       <AIAssistantWidget />
 
       {/* Auth Modal */}
@@ -76,7 +144,9 @@ export default function App() {
   return (
     <AuthProvider>
       <AgriProvider>
-        <MainApp />
+        <BrowserRouter>
+          <MainApp />
+        </BrowserRouter>
       </AgriProvider>
     </AuthProvider>
   );

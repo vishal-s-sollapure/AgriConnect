@@ -100,46 +100,31 @@ flowchart LR
 
 ### ✅ Currently Implemented
 
-The current codebase features a fully functional frontend user interface with state-driven mockup data alongside a Node.js/Express REST backend server:
+The codebase implements Phase 1 (Landing Page), Phase 2 (User Auth & Roles), and **Phase 3 (Farmer Job Posting & Management)**:
 
-- **Modern Responsive Web Interface:** Built with React 18, Vite, and custom CSS design system optimized for mobile and desktop screens.
-- **Dual-Role View Switching:** Instant toggle between **Farmer** and **Worker** user perspectives.
-- **Interactive Landing Page:** Features hero overview, role selector, core benefit highlights, platform metrics preview, and social impact summary.
-- **Farmer Dashboard:**
-  - View active farm job listings posted by the farmer.
-  - Track metrics (active jobs, total workers hired, pending applications).
-  - Review incoming worker applications with applicant experience, skills, and contact details.
-  - Accept or reject worker applications dynamically.
-- **Worker Dashboard:**
-  - Browse active agricultural job listings (e.g., Wheat Harvesting, Cotton Picking, Paddy Field Prep).
-  - Search and filter jobs by crop type and location.
-  - Apply for jobs with instant application status updates (Pending / Accepted).
-- **Interactive Post Job Modal:** Form interface for farmers to input job title, crop, daily wage (₹), workers required, location/distance, duration, and job description.
-- **Simulated Auth & Profile System:** Interactive Login/Register modal for Farmers and Workers backed by React Context and `localStorage` session state.
-- **Floating AI Assistant Layer (Widget):**
-  - Interactive voice and multilingual AI assistant component.
-  - Voice simulation trigger with prompt samples.
-  - Multilingual support preview for **Kannada (ಕನ್ನಡ)**, **Hindi (हिंदी)**, **Gujarati (ગુજરાતી)**, **Tamil (தமிழ்)**, **Telugu (తెలుగు)**, **Marathi (मराठी)**, and **English**.
-- **Node.js & Express API Server:**
-  - REST API structure with root health check endpoint (`GET /`).
-  - `/api/ai/recommendations` POST endpoint for job-worker matching calculation.
-  - `/api/ai/voice-assistant` POST endpoint for intent parsing.
-- **MongoDB Database Setup:** Mongoose database connection module configured for MongoDB integration.
-- **Rule-Based AI Match & Intent Engine:** Heuristic algorithm calculating match scores based on crop skills, proximity, and wage benchmarks, alongside keyword intent parsing.
+- **Modern Responsive Web Interface:** Built with React 18, Vite, React Router, and a custom CSS glassmorphism design system optimized for mobile and desktop screens.
+- **JWT Authentication & Authorization:** Full Node.js/Express authentication API with bcryptjs password hashing, JWT token issue/verification, and role-based access control (`farmer` / `worker`).
+- **Farmer Job Posting & Management (Phase 3):**
+  - **Create Job (`/farmer/jobs/new`):** Server-validated job creation with crop type, work type, INR daily/hourly/fixed wage, worker headcount, duration, start date, location, and description.
+  - **MongoDB Job Schema (`Job.js`):** Strictly enforced server-side schema with validation rules and user references.
+  - **My Jobs Management (`/farmer/jobs`):** Full list view of posted jobs with status filters (open, closed, completed), title/crop search, pagination, and confirmation modals for destructive actions.
+  - **Job Details View (`/farmer/jobs/:id`):** Complete job view protected by authentication and farmer ownership checks.
+  - **Edit Job (`/farmer/jobs/:id/edit`):** Pre-populated edit form allowing farmers to update open/closed job details while locking completed jobs.
+  - **Status Transitions (`PATCH /api/jobs/:id/status`):** Support for `open` ↔ `closed`, and transitioning jobs to `completed`.
+  - **Job Deletion (`DELETE /api/jobs/:id`):** Farmer ownership-verified job deletion with UI confirmation modal.
+  - **Real Dashboard Statistics:** Farmer dashboard displaying live statistics (total, open, closed, completed jobs) and recent listings directly from MongoDB.
+- **Dual-Role Dashboard Navigation:** Role-protected routes using React Router (`/farmer/*`, `/worker`).
+- **Floating AI Assistant Layer (Widget):** Voice simulation trigger and multilingual support preview.
 
-### 🚀 Planned / Upcoming
+### 🚀 Planned / Upcoming (Phase 4+)
 
-The following features are scheduled for future development phases:
+The following features are scheduled for upcoming development phases:
 
-- **JWT User Authentication:** Server-side user registration, password hashing (`bcryptjs`), and JSON Web Token authorization.
-- **Database Persistence:** Full Mongoose MongoDB models (`User`, `Job`, `Application`) replacing client state memory.
+- **Worker Job Browsing & Application (Phase 4):** Public/worker job discovery, search/filtering by daily wage/crop/location, and one-click worker applications.
 - **Real-Time GPS & Map Integration:** Live geolocation positioning, distance radius calculations, and interactive map displays (Leaflet / Google Maps).
-- **Web Speech API & Audio Integration:** Native browser speech-to-text recording and voice response synthesis.
-- **Google Gemini API Integration:** Generative AI engine for voice query understanding, real-time dialect translation, and natural conversational responses.
-- **SMS & WhatsApp Notifications:** Instant SMS alert gateway (Twilio / WhatsApp Business API) notifying workers and farmers of job applications and acceptances in local languages.
-- **Rating & Reputation System:** Dual-rating system for farmers and workers to build community trust and safety.
-- **Smart Wage Recommendation Engine:** ML model predicting fair daily wage rates based on crop demand, season, region, and job duration.
-- **Labor Demand Forecasting:** Predictive analytics dashboard estimating seasonal labor shortages for regional agricultural planning.
+- **Google Gemini API & Web Speech:** Generative AI engine for voice query understanding, real-time dialect translation, and natural conversational responses.
+- **SMS & WhatsApp Notifications:** Instant SMS alert gateway (Twilio / WhatsApp API) notifying workers and farmers of job applications.
+- **Rating & Safety System:** Dual-rating system for farmers and workers to build community trust.
 
 ---
 

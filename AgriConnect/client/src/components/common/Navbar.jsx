@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { Sprout, Menu, X, ArrowRight, LogOut, UserCheck, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Sprout, Menu, X, ArrowRight, LogOut, UserCheck, User, PlusCircle, Briefcase } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
+import { useAuth } from '../../context/AuthContext';
 import UserProfileModal from './UserProfileModal';
 
 export default function Navbar({ onOpenAuth }) {
-  const { currentUser, logout } = useAgri();
+  const { currentUser: agriUser, logout: agriLogout } = useAgri();
+  const { currentUser: authUser, logout: authLogout } = useAuth();
+
+  const currentUser = authUser || agriUser;
+  const logout = authLogout || agriLogout;
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
@@ -26,7 +33,7 @@ export default function Navbar({ onOpenAuth }) {
           height: '4.5rem'
         }}>
           {/* Brand Logo */}
-          <a href="#home" style={{
+          <Link to="/" style={{
             display: 'flex',
             alignItems: 'center',
             gap: '0.65rem',
@@ -49,16 +56,37 @@ export default function Navbar({ onOpenAuth }) {
               <Sprout size={22} color="#070a11" strokeWidth={2.5} />
             </div>
             <span>Agri<span style={{ color: '#10b981' }}>Connect</span></span>
-          </a>
+          </Link>
 
+          {/* Desktop Navigation links */}
           <nav style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '2.2rem'
+            gap: '1.8rem'
           }} className="desktop-nav">
-            <a href="#home" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 700, fontSize: '0.98rem' }}>Home</a>
-            <a href="#how-it-works" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>How It Works</a>
-            <a href="#about" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>About</a>
+            <Link to="/" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 700, fontSize: '0.98rem' }}>Home</Link>
+            
+            {currentUser && currentUser.role === 'farmer' && (
+              <>
+                <Link to="/farmer" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>Dashboard</Link>
+                <Link to="/farmer/jobs" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>My Jobs</Link>
+                <Link to="/farmer/jobs/new" style={{ color: '#34d399', textDecoration: 'none', fontWeight: 700, fontSize: '0.98rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <PlusCircle size={15} />
+                  <span>Post Job</span>
+                </Link>
+              </>
+            )}
+
+            {currentUser && currentUser.role === 'worker' && (
+              <Link to="/worker" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>Worker Portal</Link>
+            )}
+
+            {!currentUser && (
+              <>
+                <a href="/#how-it-works" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>How It Works</a>
+                <a href="/#about" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>About</a>
+              </>
+            )}
           </nav>
 
           {/* Action Buttons / User Status */}
@@ -166,10 +194,18 @@ export default function Navbar({ onOpenAuth }) {
             flexDirection: 'column',
             gap: '1.2rem'
           }}>
-            <a href="#home" onClick={() => setMobileMenuOpen(false)} style={{ color: '#ffffff', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Home</a>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>How It Works</a>
-            <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>About</a>
+            <Link to="/" onClick={() => setMobileMenuOpen(false)} style={{ color: '#ffffff', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Home</Link>
+            
+            {currentUser && currentUser.role === 'farmer' && (
+              <>
+                <Link to="/farmer" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Dashboard</Link>
+                <Link to="/farmer/jobs" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>My Jobs</Link>
+                <Link to="/farmer/jobs/new" onClick={() => setMobileMenuOpen(false)} style={{ color: '#34d399', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 700 }}>+ Post a Job</Link>
+              </>
+            )}
+
             <hr style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+            
             {currentUser ? (
               <>
                 <button

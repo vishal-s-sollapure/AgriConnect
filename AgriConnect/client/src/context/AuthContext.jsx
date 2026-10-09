@@ -5,11 +5,11 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('agriconnect_user');
+    const saved = localStorage.getItem('agriconnect_user') || localStorage.getItem('agri_user');
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem('agriconnect_token') || null);
+  const [token, setToken] = useState(() => localStorage.getItem('agriconnect_token') || localStorage.getItem('agri_token') || null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
   // Restore authenticated user on page reload
   const refreshUser = async () => {
     const storedToken = localStorage.getItem('agriconnect_token') || localStorage.getItem('agri_token');
-    if (storedToken) {
+    if (storedToken && !storedToken.startsWith('simulated_')) {
       try {
         const res = await authApi.getCurrentUser();
         if (res.success && res.user) {
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
     refreshUser();
   }, []);
 
-  // Login action
+  // Login action with automatic backend registration fallback for quick logins
   const login = async (credentials) => {
     setAuthError(null);
     try {
@@ -70,32 +70,48 @@ export function AuthProvider({ children }) {
         }
       }
     } catch (err) {
-      console.warn('Backend login attempt error, using fallback state:', err.message);
-      setAuthError(err.message || 'Invalid email or password.');
-      // If error is explicit backend credentials rejection, throw error for UI display
-      if (err.message && (err.message.includes('Invalid') || err.message.includes('password'))) {
-        throw err;
+      // If login failed, attempt to auto-create user in backend MongoDB if it's a demo account
+      try {
+        const defaultEmail = credentials.email || (credentials.role === 'farmer' ? 'farmer@agriconnect.org' : 'worker@agriconnect.org');
+        const defaultPassword = credentials.password || 'Password123';
+
+        const regRes = await authApi.register({
+          name: credentials.name || (credentials.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
+          email: defaultEmail,
+          phone: credentials.phone || '9876543210',
+          password: defaultPassword,
+          role: credentials.role || 'farmer',
+          location: credentials.location || 'Anand, Gujarat'
+        });
+
+        if (regRes.success && regRes.user) {
+          setCurrentUser(regRes.user);
+          setToken(regRes.token);
+          return { success: true, user: regRes.user };
+        }
+      } catch (regErr) {
+        console.warn('Backend login & auto-register failed:', regErr.message);
+        setAuthError(err.message || 'Login failed');
+        if (err.message && (err.message.includes('Invalid') || err.message.includes('password'))) {
+          throw err;
+        }
       }
     }
 
-    // Fallback simulated session if backend server is unreachable
+    // Offline fallback state
     const fallbackUser = {
       id: 'user-' + Date.now(),
+      _id: 'user-' + Date.now(),
       name: credentials.name || (credentials.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
       role: credentials.role || 'farmer',
       email: credentials.email || 'user@agriconnect.org',
       phone: credentials.phone || '9876543210',
       location: credentials.location || 'Gujarat, India',
       farmName: credentials.role === 'farmer' ? 'Patel Farms' : undefined,
-      farmType: credentials.role === 'farmer' ? 'Wheat & Cotton' : undefined,
-      skills: credentials.role === 'worker' ? 'Harvesting, Field Labor' : undefined,
-      experience: credentials.role === 'worker' ? '3+ Years' : undefined,
-      availability: credentials.role === 'worker' ? 'Full Time' : undefined,
-      preferredRadius: credentials.role === 'worker' ? '10 km' : undefined
+      farmType: credentials.role === 'farmer' ? 'Wheat & Cotton' : undefined
     };
 
     setCurrentUser(fallbackUser);
-    setToken('simulated_jwt_token_' + Date.now());
     return { success: true, user: fallbackUser };
   };
 
@@ -110,32 +126,10 @@ export function AuthProvider({ children }) {
         return { success: true, user: res.user };
       }
     } catch (err) {
-      console.warn('Backend register error, using fallback state:', err.message);
+      console.warn('Backend register error:', err.message);
       setAuthError(err.message || 'Registration failed.');
-      if (err.message && err.message.includes('already exists')) {
-        throw err;
-      }
+      throw err;
     }
-
-    // Fallback registration for offline environment
-    const fallbackUser = {
-      id: 'user-' + Date.now(),
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone || '9876543210',
-      role: userData.role || 'farmer',
-      location: userData.location || 'Gujarat, India',
-      farmName: userData.farmName || (userData.role === 'farmer' ? `${userData.name}'s Farm` : undefined),
-      farmType: userData.farmType || (userData.role === 'farmer' ? 'Multi-crop Agriculture' : undefined),
-      skills: userData.skills || (userData.role === 'worker' ? 'General Agriculture' : undefined),
-      experience: userData.experience || (userData.role === 'worker' ? '1-3 Years' : undefined),
-      availability: userData.availability || (userData.role === 'worker' ? 'Full Time' : undefined),
-      preferredRadius: userData.preferredRadius || (userData.role === 'worker' ? '10 km' : undefined)
-    };
-
-    setCurrentUser(fallbackUser);
-    setToken('simulated_jwt_token_' + Date.now());
-    return { success: true, user: fallbackUser };
   };
 
   // Profile update action
