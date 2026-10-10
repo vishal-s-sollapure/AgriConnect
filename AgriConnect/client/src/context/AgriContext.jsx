@@ -156,6 +156,41 @@ export function AgriProvider({ children }) {
     return { success: true, user: updated };
   };
 
+  // Post job helper
+  const postJob = async (jobData) => {
+    try {
+      const formattedData = {
+        title: jobData.title,
+        crop: jobData.crop || 'Wheat',
+        workType: jobData.workType || 'Harvesting',
+        workersRequired: Number(jobData.workersNeeded || jobData.workersRequired || 1),
+        wageAmount: Number(jobData.wage || jobData.wageAmount || 500),
+        wageType: 'daily',
+        startDate: jobData.startDate || new Date().toISOString().split('T')[0],
+        durationValue: parseInt(jobData.duration) || 1,
+        durationUnit: 'days',
+        location: jobData.location || 'Local Farm',
+        description: jobData.description || 'Farm labor job'
+      };
+      const res = await jobService.createJob(formattedData);
+      if (res.success) {
+        setJobs(prev => [res.job, ...prev]);
+        return res.job;
+      }
+    } catch (err) {
+      console.warn('Backend postJob failed, applying local state update:', err);
+      const newJob = {
+        _id: 'job-' + Date.now(),
+        id: 'job-' + Date.now(),
+        ...jobData,
+        status: 'open',
+        createdAt: new Date().toISOString()
+      };
+      setJobs(prev => [newJob, ...prev]);
+      return newJob;
+    }
+  };
+
   // Logout handler
   const logout = () => {
     setCurrentUser(null);
@@ -176,6 +211,7 @@ export function AgriProvider({ children }) {
       register,
       updateProfile,
       logout,
+      postJob,
       jobs,
       applications
     }}>
