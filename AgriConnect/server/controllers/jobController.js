@@ -1,5 +1,137 @@
 const mongoose = require('mongoose');
 const Job = require('../models/Job');
+const Application = require('../models/Application');
+
+/**
+ * Helper to safely escape regular expressions to avoid ReDoS
+ */
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
+/**
+ * @desc    Get all open jobs with server-side filtering, search, and pagination
+ * @route   GET /api/jobs
+ * @access  Public
+ */
+exports.getJobs = async (req, res) => {
+  try {
+    const {
+      search,
+      crop,
+      workType,
+      location,
+      minWage,
+      maxWage,
+      wageType,
+      startDate,
+      page,
+      limit
+    } = req.query;
+
+    // Filter strictly for published open jobs
+    const query = { status: 'open' };
+
+    // Search keyword across title, crop, description, location, village, district, state
+    if (search && typeof search === 'string' && search.trim()) {
+      const sanitized = escapeRegex(search.trim());
+      const searchRegex = new RegExp(sanitized, 'i');
+      query.$or = [
+        { title: searchRegex },
+        { crop: searchRegex },
+        { description: searchRegex },
+        { location: searchRegex },
+        { village: searchRegex },
+        { district: searchRegex },
+        { state: searchRegex }
+      ];
+    }
+
+    // Filter by Crop
+    if (crop && typeof crop === 'string' && crop.trim()) {
+      const sanitizedCrop = escapeRegex(crop.trim());
+      query.crop = new RegExp(`^${sanitizedCrop}$`, 'i');
+    }
+
+    // Filter by Work Type
+    if (workType && typeof workType === 'string' && workType.trim()) {
+      const sanitizedWorkType = escapeRegex(workType.trim());
+      query.workType = new RegExp(`^${sanitizedWorkType}$`, 'i');
+    }
+
+    // Filter by Location
+    if (location && typeof location === 'string' && location.trim()) {
+      const sanitizedLocation = escapeRegex(location.trim());
+      const locRegex = new RegExp(sanitizedLocation, 'i');
+      const locOr = [
+        { location: locRegex },
+        { village: locRegex },
+        { district: locRegex },
+        { state: locRegex }
+      ];
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: locOr }];
+        delete query.$or;
+      } else {
+        query.$or = locOr;
+      }
+    }
+
+    // Filter by Wage Type
+    if (wageType && ['daily', 'hourly', 'fixed'].includes(wageType)) {
+      query.wageType = wageType;
+    }
+
+    // Filter by Wage Range
+    const parsedMinWage = Number(minWage);
+    const parsedMaxWage = Number(maxWage);
+    if (!isNaN(parsedMinWage) && parsedMinWage >= 0) {
+      query.wageAmount = { ...(query.wageAmount || {}), $gte: parsedMinWage };
+    }
+    if (!isNaN(parsedMaxWage) && parsedMaxWage > 0) {
+      query.wageAmount = { ...(query.wageAmount || {}), $lte: parsedMaxWage };
+    }
+
+    // Filter by Start Date
+    if (startDate) {
+      const parsedDate = new Date(startDate);
+      if (!isNaN(parsedDate.getTime())) {
+        query.startDate = { $gte: parsedDate };
+      }
+    }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await Job.countDocuments(query);
+    const jobs = await Job.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate('farmer', 'name farmName location farmType');
+
+    return res.status(200).json({
+      success: true,
+      data: jobs,
+      jobs,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Get Jobs Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while discovering jobs'
+    });
+  }
+};
 
 /**
  * @desc    Create a new job posting
@@ -215,14 +347,84 @@ exports.getMyJobs = async (req, res) => {
       stats.total += item.count;
     });
 
+    // Aggregate application metrics across all jobs owned by this farmer
+    const allFarmerJobIds = await Job.find({ farmer: req.user._id }).distinct('_id');
+
+    const appStatsAgg = await Application.aggregate([
+      { $match: { job: { $in: allFarmerJobIds } } },
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    const applicationStats = {
+      total: 0,
+      pending: 0,
+      accepted: 0,
+      rejected: 0,
+      withdrawn: 0
+    };
+
+    appStatsAgg.forEach(item => {
+      if (applicationStats[item._id] !== undefined) {
+        applicationStats[item._id] = item.count;
+      }
+      applicationStats.total += item.count;
+    });
+
+    stats.totalApplications = applicationStats.total;
+    stats.pendingApplications = applicationStats.pending;
+    stats.acceptedWorkers = applicationStats.accepted;
+    stats.rejectedApplications = applicationStats.rejected;
+    stats.withdrawnApplications = applicationStats.withdrawn;
+
+    // Aggregate per-job applicant counts for the returned page of jobs
+    const pageJobIds = jobs.map(j => j._id);
+    const perJobAgg = await Application.aggregate([
+      { $match: { job: { $in: pageJobIds } } },
+      {
+        $group: {
+          _id: { job: '$job', status: '$status' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const jobApplicantCountMap = {};
+    perJobAgg.forEach(item => {
+      const jobId = item._id.job.toString();
+      if (!jobApplicantCountMap[jobId]) {
+        jobApplicantCountMap[jobId] = {
+          total: 0,
+          pending: 0,
+          accepted: 0,
+          rejected: 0,
+          withdrawn: 0
+        };
+      }
+      jobApplicantCountMap[jobId][item._id.status] = item.count;
+      jobApplicantCountMap[jobId].total += item.count;
+    });
+
+    const jobsWithCounts = jobs.map(job => {
+      const jobObj = job.toObject();
+      jobObj.applicantCounts = jobApplicantCountMap[job._id.toString()] || {
+        total: 0,
+        pending: 0,
+        accepted: 0,
+        rejected: 0,
+        withdrawn: 0
+      };
+      return jobObj;
+    });
+
     return res.status(200).json({
       success: true,
-      count: jobs.length,
+      count: jobsWithCounts.length,
       total,
       page,
       pages: Math.ceil(total / limit) || 1,
       stats,
-      jobs
+      applicationStats,
+      jobs: jobsWithCounts
     });
 
   } catch (error) {
@@ -237,7 +439,7 @@ exports.getMyJobs = async (req, res) => {
 /**
  * @desc    Get single job details
  * @route   GET /api/jobs/:id
- * @access  Private
+ * @access  Public / Authenticated
  */
 exports.getJobById = async (req, res) => {
   try {
@@ -262,17 +464,56 @@ exports.getJobById = async (req, res) => {
       });
     }
 
-    // Farmer job-management protection: farmer can only view their own jobs via management route
-    if (req.user.role === 'farmer' && job.farmer._id.toString() !== req.user._id.toString()) {
+    const isOwnerFarmer =
+      req.user &&
+      req.user.role === 'farmer' &&
+      job.farmer._id.toString() === req.user._id.toString();
+
+    // If job is closed or completed:
+    if (job.status !== 'open') {
+      if (isOwnerFarmer) {
+        // Owner farmer can view and manage their own job in any status
+        return res.status(200).json({
+          success: true,
+          job
+        });
+      }
       return res.status(404).json({
         success: false,
-        message: 'Job not found or inaccessible'
+        message: 'Job not found or is no longer open'
       });
+    }
+
+    // Job is open: strip confidential contact details (email, phone) for non-owners
+    let safeJob = job.toObject();
+    if (!isOwnerFarmer && safeJob.farmer) {
+      delete safeJob.farmer.email;
+      delete safeJob.farmer.phone;
+    }
+
+    // If requester is an authenticated worker, check if they have applied
+    let hasApplied = false;
+    let application = null;
+    if (req.user && req.user.role === 'worker') {
+      const existingApp = await Application.findOne({
+        job: job._id,
+        worker: req.user._id
+      });
+      if (existingApp) {
+        hasApplied = true;
+        application = {
+          _id: existingApp._id,
+          status: existingApp.status,
+          createdAt: existingApp.createdAt
+        };
+      }
     }
 
     return res.status(200).json({
       success: true,
-      job
+      job: safeJob,
+      hasApplied,
+      application
     });
 
   } catch (error) {
@@ -571,6 +812,124 @@ exports.deleteJob = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error while deleting job'
+    });
+  }
+};
+
+/**
+ * @desc    Apply for an open job
+ * @route   POST /api/jobs/:id/apply
+ * @access  Private (Worker only)
+ */
+exports.applyForJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid job ID format'
+      });
+    }
+
+    const job = await Job.findById(id);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    // Verify job is currently open
+    if (job.status !== 'open') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot apply: This job is no longer open for applications'
+      });
+    }
+
+    // Prevent a worker from applying to their own job if applicable
+    if (job.farmer.toString() === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot apply to your own job posting'
+      });
+    }
+
+    // Validate optional message length
+    let applicationMessage = '';
+    if (message !== undefined && message !== null) {
+      if (typeof message !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Application message must be text'
+        });
+      }
+      applicationMessage = message.trim();
+      if (applicationMessage.length > 500) {
+        return res.status(400).json({
+          success: false,
+          message: 'Application message cannot exceed 500 characters'
+        });
+      }
+    }
+
+    // Check duplicate application at application layer
+    const existingApplication = await Application.findOne({
+      job: job._id,
+      worker: req.user._id
+    });
+
+    if (existingApplication) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already applied for this job'
+      });
+    }
+
+    // Save application to MongoDB
+    const application = await Application.create({
+      job: job._id,
+      worker: req.user._id,
+      message: applicationMessage,
+      status: 'pending'
+    });
+
+    const populatedApp = await Application.findById(application._id)
+      .populate('job', 'title crop location wageAmount wageType startDate durationValue durationUnit status')
+      .populate('worker', 'name phone location skills experience');
+
+    return res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully',
+      application: populatedApp
+    });
+
+  } catch (error) {
+    console.error('Apply For Job Error:', error);
+
+    // Handle MongoDB unique compound index duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already applied for this job'
+      });
+    }
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: messages
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while submitting job application'
     });
   }
 };

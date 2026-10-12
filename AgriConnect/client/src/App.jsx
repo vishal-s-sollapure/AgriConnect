@@ -9,7 +9,11 @@ import CreateJob from './pages/farmer/CreateJob';
 import MyJobs from './pages/farmer/MyJobs';
 import JobDetails from './pages/farmer/JobDetails';
 import EditJob from './pages/farmer/EditJob';
+import JobApplicants from './pages/farmer/JobApplicants';
 import WorkerDashboard from './pages/worker/WorkerDashboard';
+import JobDiscovery from './pages/worker/JobDiscovery';
+import JobPublicDetails from './pages/worker/JobPublicDetails';
+import MyApplications from './pages/worker/MyApplications';
 import Footer from './components/common/Footer';
 import AuthModal from './pages/auth/AuthModal';
 import AIAssistantWidget from './components/common/AIAssistantWidget';
@@ -108,6 +112,15 @@ function MainApp() {
             } 
           />
 
+          <Route 
+            path="/farmer/jobs/:id/applicants" 
+            element={
+              <ProtectedRoute allowedRoles={['farmer']} onOpenAuth={handleOpenAuth}>
+                <JobApplicants />
+              </ProtectedRoute>
+            } 
+          />
+
           {/* Worker Portal Protected Routes */}
           <Route 
             path="/worker" 
@@ -116,6 +129,26 @@ function MainApp() {
                 <WorkerDashboard />
               </ProtectedRoute>
             } 
+          />
+
+          <Route 
+            path="/worker/applications" 
+            element={
+              <ProtectedRoute allowedRoles={['worker']} onOpenAuth={handleOpenAuth}>
+                <MyApplications />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Public Job Marketplace Routes */}
+          <Route 
+            path="/jobs" 
+            element={<JobDiscovery />} 
+          />
+
+          <Route 
+            path="/jobs/:id" 
+            element={<JobPublicDetails onOpenAuth={handleOpenAuth} />} 
           />
 
           {/* Catch-all redirect */}

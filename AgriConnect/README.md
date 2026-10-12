@@ -10,7 +10,7 @@
 [![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248.svg)](https://www.mongodb.com/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
 
-AgriConnect is a technology platform designed to directly connect farmers with local agricultural workers across India. By enabling farmers to post time-sensitive farm jobs and allowing workers to discover nearby daily-wage employment opportunities, AgriConnect bridges the gap in rural agricultural labor management. The platform aims to reduce labor search friction, ensure fair wages, and empower farming communities through accessible digital technology.
+AgriConnect is a technology platform designed to directly connect farmers with local agricultural workers across India. By enabling farmers to post time-critical farm jobs and allowing workers to discover nearby daily-wage opportunities, apply with a single tap, and track their application progress, AgriConnect bridges the gap in rural agricultural labor management. The platform eliminates exploitative middlemen, guarantees transparent wages, and empowers farming communities through accessible digital technology.
 
 ---
 
@@ -20,23 +20,23 @@ AgriConnect is a technology platform designed to directly connect farmers with l
 - [Problem Statement](#-problem-statement)
 - [Our Solution](#-our-solution)
 - [Features](#-features)
-  - [Currently Implemented](#-currently-implemented)
-  - [Planned / Upcoming](#-planned--upcoming)
-- [Screenshots](#-screenshots)
+  - [Currently Implemented (Phases 1–5)](#-currently-implemented-phases-15)
+  - [Planned / Upcoming (Phases 6–7)](#-planned--upcoming-phases-67)
 - [Tech Stack](#-tech-stack)
+- [API Reference](#-api-reference)
 - [Architecture](#-architecture)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
-  - [Clone Repository](#clone-repository)
   - [Install & Run](#install--run)
 - [Environment Variables](#-environment-variables)
-- [Usage](#-usage)
+- [Usage & User Workflows](#-usage--user-workflows)
+  - [Farmer Workflow](#1-farmer-workflow)
+  - [Worker Workflow](#2-worker-workflow)
 - [Roadmap](#-roadmap)
-- [Future AI Capabilities](#-future-ai-capabilities)
-- [Security](#-security)
+- [Security & Data Integrity](#-security--data-integrity)
+- [Testing & Quality Assurance](#-testing--quality-assurance)
 - [Social Impact](#-social-impact)
-- [Testing](#-testing)
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Author](#-author)
@@ -45,11 +45,11 @@ AgriConnect is a technology platform designed to directly connect farmers with l
 
 ## 🎯 About the Project
 
-**AgriConnect** is designed specifically for the agricultural ecosystem in India. Farming operations such as crop harvesting, sowing, weeding, and paddy preparation are highly seasonal and time-critical. Delays in obtaining workers can lead to severe crop losses for farmers, while workers frequently struggle to find consistent, nearby employment with fair daily wages.
+**AgriConnect** is purpose-built for the agricultural ecosystem in India. Farming operations such as crop harvesting, sowing, weeding, and paddy preparation are highly seasonal and time-critical. Delays in obtaining workers can lead to devastating crop losses for farmers, while workers frequently struggle to find consistent, nearby employment with fair daily wages.
 
-AgriConnect provides a dual-sided platform tailored for both **Farmers** and **Agricultural Workers**:
-- **For Farmers:** Fast, straightforward job creation specifying crop type, worker requirements, location, daily wage rate, and duration, alongside real-time application management.
-- **For Workers:** Instant discovery of nearby agricultural opportunities, transparent wage details, clear crop requirements, and one-click job application.
+AgriConnect provides a dual-sided marketplace tailored for both **Farmers** and **Agricultural Workers**:
+- **For Farmers:** Fast, straightforward job creation specifying crop type, worker requirements, location, daily wage rate, and duration, alongside real-time application tracking.
+- **For Workers:** Instant discovery of open agricultural opportunities, transparent wage details, crop requirements, one-click job applications, and status tracking.
 - **Long-term Vision:** To create an intelligent, voice-first, multilingual agricultural labor network that uses AI-driven location matching, wage estimation, and labor demand prediction to uplift rural livelihoods.
 
 ---
@@ -68,7 +68,7 @@ Agricultural labor allocation in India relies heavily on informal, fragmented ch
 - **Limited Job Visibility:** Inability to find farm work opportunities outside their immediate village or personal network.
 - **Inconsistent Employment:** Unpredictable daily wage income due to lack of a centralized platform.
 - **Distance & Mobility Constraints:** Difficulty finding work close to their place of residence.
-- **Exploitative Middlemen:** Loss of income to unorganized agents and brokers.
+- **Exploitative Middlemen:** Loss of income to unorganized agents and brokers who charge commissions.
 
 ---
 
@@ -89,122 +89,186 @@ flowchart LR
 ```
 
 1. **Job Posting:** Farmers post farm job listings with crop specifications, daily wage rate, and worker headcounts.
-2. **Job Discovery:** Workers view available nearby jobs sorted by distance, daily wage, and crop type.
-3. **Application:** Workers submit job applications directly through the platform.
-4. **Management:** Farmers review incoming worker applications and update statuses (Accepted / Rejected).
+2. **Job Discovery:** Workers view open jobs with multi-parameter filtering (crop, work type, location, wage range, start date).
+3. **Application:** Workers submit job applications directly through the platform with optional notes.
+4. **Tracking & Management:** Workers track status (`pending`, `accepted`, `rejected`, `withdrawn`) and can withdraw pending applications.
 5. **Direct Connection:** Accepted workers connect directly with farmers to complete agricultural tasks.
 
 ---
 
 ## ✨ Features
 
-### ✅ Currently Implemented
+### ✅ Currently Implemented (Phases 1–5)
 
-The codebase implements Phase 1 (Landing Page), Phase 2 (User Auth & Roles), and **Phase 3 (Farmer Job Posting & Management)**:
+The codebase implements Phase 1 (Landing Page), Phase 2 (User Auth & Roles), Phase 3 (Farmer Job Posting & Management), Phase 4 (Worker Job Discovery & Applications), and **Phase 5 (Farmer Applicant Management & Hiring)**:
 
-- **Modern Responsive Web Interface:** Built with React 18, Vite, React Router, and a custom CSS glassmorphism design system optimized for mobile and desktop screens.
-- **JWT Authentication & Authorization:** Full Node.js/Express authentication API with bcryptjs password hashing, JWT token issue/verification, and role-based access control (`farmer` / `worker`).
-- **Farmer Job Posting & Management (Phase 3):**
-  - **Create Job (`/farmer/jobs/new`):** Server-validated job creation with crop type, work type, INR daily/hourly/fixed wage, worker headcount, duration, start date, location, and description.
-  - **MongoDB Job Schema (`Job.js`):** Strictly enforced server-side schema with validation rules and user references.
-  - **My Jobs Management (`/farmer/jobs`):** Full list view of posted jobs with status filters (open, closed, completed), title/crop search, pagination, and confirmation modals for destructive actions.
-  - **Job Details View (`/farmer/jobs/:id`):** Complete job view protected by authentication and farmer ownership checks.
-  - **Edit Job (`/farmer/jobs/:id/edit`):** Pre-populated edit form allowing farmers to update open/closed job details while locking completed jobs.
-  - **Status Transitions (`PATCH /api/jobs/:id/status`):** Support for `open` ↔ `closed`, and transitioning jobs to `completed`.
-  - **Job Deletion (`DELETE /api/jobs/:id`):** Farmer ownership-verified job deletion with UI confirmation modal.
-  - **Real Dashboard Statistics:** Farmer dashboard displaying live statistics (total, open, closed, completed jobs) and recent listings directly from MongoDB.
-- **Dual-Role Dashboard Navigation:** Role-protected routes using React Router (`/farmer/*`, `/worker`).
-- **Floating AI Assistant Layer (Widget):** Voice simulation trigger and multilingual support preview.
+#### 1. Farmer Applicant Management & Hiring (`/farmer/jobs/:id/applicants`) — Phase 5
+- **Dedicated Applicant Review View:** Accessible exclusively to the job-owning farmer, displaying job specifications, status badges, and hiring progress.
+- **Hiring Summary & Progress Bar:** Displays real database-aggregated metrics for total applications, pending review, accepted/hired count, remaining vacancies, rejected, and withdrawn counts with a dynamic percentage progress bar.
+- **Capacity Enforcement & Staffing Alerts:** Enforces that accepted workers cannot exceed `workersRequired`. Displays a prominent notification when a job is fully staffed and disables further acceptances.
+- **Concurrency-Safe Hiring:** Employs an in-process per-job mutex and atomic `Application.findOneAndUpdate` to guarantee capacity limits are strictly honored even under parallel acceptance requests.
+- **Safe Worker Profile Modal:** Authenticated farmers can inspect full worker credentials (skills, agricultural experience, availability, preferred radius, platform registration date, and history of applications under this farmer) without exposing private emails, password hashes, or sensitive fields.
+- **Privacy-Preserving Contact Disclosure:** Worker phone numbers remain strictly masked and confidential until the farmer accepts their application, at which point direct phone contact is revealed for work coordination.
+- **Interactive Hiring Decisions:** Single-click "Accept Worker" or "Reject Application" buttons with confirmation modal dialogs preventing accidental decisions and duplicate submissions during in-flight requests.
+- **Status Filter Tabs:** Filter applicant cards by `All`, `Pending`, `Accepted`, `Rejected`, and `Withdrawn` with live counts.
 
-### 🚀 Planned / Upcoming (Phase 4+)
+#### 2. Farmer Dashboard & Job Cards Integration — Phase 5
+- **Real Database-Aggregated Stats:** Live metrics on the farmer dashboard for Total Posted Jobs, Open Jobs, Total Applications Received, Pending Review, and Accepted Workers.
+- **Per-Job Applicant Indicators:** Every job card in the dashboard and "My Jobs" (`/farmer/jobs`) shows live applicant count badges (`X Applicants`, `Y pending`, `Z/W hired`).
+- **Direct Navigation Links:** One-click "Manage Applicants" button on each job card and in the job details action bar.
 
-The following features are scheduled for upcoming development phases:
+#### 3. Worker Application Status Reflection — Phase 5
+- **Server-Synced Tracking:** Workers' "My Applications" page reflects real-time server statuses (`Accepted: Selected for Job`, `Rejected: Not Selected`, `Withdrawn by Worker`, `Pending: Awaiting Farmer Decision`).
+- **Live Refetching:** Synchronizes directly with the backend database.
 
-- **Worker Job Browsing & Application (Phase 4):** Public/worker job discovery, search/filtering by daily wage/crop/location, and one-click worker applications.
-- **Real-Time GPS & Map Integration:** Live geolocation positioning, distance radius calculations, and interactive map displays (Leaflet / Google Maps).
-- **Google Gemini API & Web Speech:** Generative AI engine for voice query understanding, real-time dialect translation, and natural conversational responses.
-- **SMS & WhatsApp Notifications:** Instant SMS alert gateway (Twilio / WhatsApp API) notifying workers and farmers of job applications.
-- **Rating & Safety System:** Dual-rating system for farmers and workers to build community trust.
+#### 4. Public Job Discovery (`/jobs`) — Phase 4
+- **Multi-Parameter Server-Side Filtering:** Filter open jobs by crop type, work type, location (village/district/state), wage type (`daily`, `hourly`, `fixed`), minimum/maximum wage, and start date.
+- **Debounced Keyword Search:** Search bar with 380ms debouncing across title, crop, description, village, district, state, and location with safe regex escaping to prevent ReDoS.
+- **URL Query State Synchronization:** Filter parameters automatically sync with browser URL search parameters (`useSearchParams`), enabling shareable and bookmarkable searches.
+- **Responsive UI States:** Glassmorphism card layout, loading skeletons with shimmer animations, empty states with one-click filter resets, error recovery with retry action, and pagination.
+
+#### 5. Public Job Details (`/jobs/:id`) — Phase 4
+- **Safe Public Inspection:** Complete specifications (crop, work type, wage, start date, duration, workers required, location details, description).
+- **Safe Farmer Profile Projections:** Exposes only safe public profile data (`name`, `farmName`, `location`, `farmType`), strictly omitting confidential contact details (`email`, `phone`) and credential hashes.
+- **Worker Application Flow:** Interactive application modal with optional message (max 500 characters with live counter).
+- **Duplicate Prevention:** Dynamically checks if the logged-in worker has already applied and renders the current application status badge (`Pending`, `Accepted`, `Rejected`, `Withdrawn`) instead of an active application button.
+- **Role Enforcement:** Farmers are clearly shown an informational notice that applications are reserved for worker accounts; unauthenticated visitors are prompted to sign in with return navigation.
+
+#### 6. Worker Application Management (`/worker/applications`) — Phase 4
+- **Application Tracking:** Dedicated dashboard with status tabs (`All`, `Pending`, `Accepted`, `Rejected`, `Withdrawn`) and accessible visual indicators.
+- **Application Withdrawal:** Workers can withdraw their own pending applications with an interactive confirmation modal, updating UI state instantly.
+- **Job Status Monitoring:** Displays current status of the target job (`Active`, `Closed`, `Completed`) with direct links to view full job details.
+
+#### 7. Worker Dashboard Integration (`/worker`) — Phase 4
+- **Live MongoDB Metrics:** Real backend statistics for Total Applications, Pending Review, and Accepted Jobs (no hardcoded or placeholder values).
+- **Recent Applications Preview:** Fast preview of the worker's latest farm job applications with status badges and quick links.
+- **Shortcuts & Tabs:** Rapid navigation shortcuts to browse open jobs, manage applications, and edit worker profile.
+
+#### 8. Farmer Job Posting & Management (`/farmer/*`) — Phase 3
+- **Job Creation (`/farmer/jobs/new`):** Server-validated job creation with crop type, work type, wage amount, duration, start date, headcount, and location.
+- **My Jobs Management (`/farmer/jobs`):** Full list view of posted jobs with status filters (`open`, `closed`, `completed`), search, pagination, and confirmation modals.
+- **Job Details View (`/farmer/jobs/:id`):** Owner-protected job management view with editing, status transitions (`open` ↔ `closed`, `completed`), and job deletion.
+- **Live Dashboard Stats:** Real-time metrics showing total, open, closed, and completed jobs.
+
+#### 9. JWT Authentication & Role-Based Access Control — Phase 2
+- **Secure Auth API:** Registration and login with `bcryptjs` password hashing and JWT token issuance.
+- **Role Isolation:** Server-side middleware (`protect`, `requireRole('farmer')`, `requireRole('worker')`) enforcing strict role separation.
+- **User Profiles:** Editable farmer (`farmName`, `farmType`) and worker profiles (`skills`, `experience`, `availability`, `preferredRadius`).
+
+#### 10. Modern UI System & Public Landing Page — Phase 1
+- **Glassmorphism Theme:** Custom vanilla CSS design system utilizing CSS variables (`--primary: #10b981`, `--accent: #84cc16`), dark mode, and organic blur panels.
+- **Interactive Landing Page:** Role switcher, impact statistics, how-it-works workflow, and floating voice AI assistant preview.
 
 ---
 
-## 📸 Screenshots
+### 🚀 Planned / Upcoming (Phases 6–7)
 
-<!-- Add screenshots here -->
-
-*Screenshots will be added as UI design iterations are finalized.*
-
-### Recommended Future Showcase Views:
-- **Landing Page & Role Selection**
-- **Farmer Dashboard & Application Management**
-- **Worker Job Discovery & Application View**
-- **Post Agricultural Job Modal**
-- **Multilingual & Voice AI Assistant Interface**
-- **Mobile Responsive View**
+- **Phase 6: AI Matching & Geolocation Discovery:** ML-driven worker-job compatibility scoring, automated crop skill alignment, wage parity suggestions, and interactive map interface (Leaflet / Google Maps) with radius filtering.
+- **Phase 7: Voice + Multilingual + Smart Features:** Web Speech API integration, Google Gemini API for regional dialect translation (Kannada, Hindi, Gujarati, Tamil, Telugu, Marathi), smart wage recommendation engine, and labor demand forecasting.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Currently Installed & Implemented
-
 | Layer | Technology | Purpose |
 |---|---|---|
-| **Frontend** | React 18 | Declarative UI component hierarchy |
-| **Build Tool** | Vite 5 | Fast development server and production bundling |
-| **Icons** | Lucide React | Modern vector icon set |
-| **Styling** | Custom Vanilla CSS | Responsive design system and glassmorphism styling |
-| **Backend Runtime** | Node.js | JavaScript runtime environment |
-| **Web Framework** | Express.js 5 | REST API routing and middleware management |
-| **Database ODM** | Mongoose 9 | MongoDB object modeling and database connection |
-| **Development Utilities** | Nodemon & Concurrently | Server hot reloading and monorepo script execution |
+| **Frontend Framework** | React 18 | Declarative UI component architecture |
+| **Routing** | React Router v7 | Client-side routing with role-protected route guards |
+| **Build Tool** | Vite 5 | Fast development server and production bundler |
+| **HTTP Client** | Axios 1.x | Configured API instance with JWT interceptors |
+| **Icons** | Lucide React | Clean, accessible vector icons |
+| **Styling** | Vanilla CSS | Custom responsive glassmorphism design system |
+| **Backend Runtime** | Node.js (v18+) | Server-side JavaScript execution environment |
+| **Web Framework** | Express.js 5 | REST API endpoints, routing, and middleware |
+| **Database ODM** | Mongoose 9 | Schema validation, compound indexing, and queries |
+| **Database** | MongoDB | Document database for users, jobs, and applications |
+| **Authentication** | JWT & bcryptjs | Token-based auth and cryptographic password hashing |
+| **Testing** | Node.js assert | Automated integration test suites for Phases 3 and 4 |
 
-### Planned Technologies (Upcoming Phases)
+---
 
-| Technology | Planned Purpose |
-|---|---|
-| **Tailwind CSS** | Utility-first styling framework |
-| **JWT & bcryptjs** | Secure user authentication and password encryption |
-| **Google Gemini API** | Advanced LLM intelligence for voice and multilingual support |
-| **Web Speech API** | Native speech recognition and audio synthesis |
-| **Leaflet / Google Maps API** | Geolocation mapping and interactive job discovery maps |
-| **Twilio API** | SMS and WhatsApp notifications in regional languages |
+## 📡 API Reference
+
+### Public & Worker Job Discovery
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/jobs` | Public | Returns open jobs with search, crop, location, wage, and date filters |
+| `GET` | `/api/jobs/:id` | Public / Auth | Safe public job details; returns worker's application status if logged in |
+
+### Worker Applications
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/jobs/:id/apply` | Worker Only | Submits application for an open job with optional message |
+| `GET` | `/api/applications/my-applications` | Worker Only | Returns current worker's applications and status breakdown stats |
+| `PATCH` | `/api/applications/:id/withdraw` | Worker Only | Withdraws worker's pending application |
+
+### Farmer Job Management
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/jobs` | Farmer Only | Creates a new job posting |
+| `GET` | `/api/jobs/my-jobs` | Farmer Only | Retrieves jobs created by the authenticated farmer with applicant counts |
+| `PUT` | `/api/jobs/:id` | Farmer Only | Updates an existing job owned by the farmer |
+| `PATCH` | `/api/jobs/:id/status` | Farmer Only | Updates job status (`open`, `closed`, `completed`) |
+| `DELETE` | `/api/jobs/:id` | Farmer Only | Deletes a job posting owned by the farmer |
+
+### Farmer Applicant Management & Hiring (Phase 5)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/jobs/:id/applications` | Farmer Only | Retrieves paginated applicant list for a job owned by the authenticated farmer |
+| `PATCH` | `/api/applications/:id/status` | Farmer Only | Accepts or rejects a pending application with concurrency-safe capacity checking |
+| `GET` | `/api/jobs/:id/hiring-summary` | Farmer Only | Retrieves real hiring statistics, vacancies, and staffing status |
+| `GET` | `/api/users/workers/:id` | Farmer Only | Returns safe worker profile with phone revealed only after application acceptance |
+
+### Authentication & Profile
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Public | Registers a new farmer or worker account |
+| `POST` | `/api/auth/login` | Public | Authenticates credentials and returns JWT token |
+| `GET` | `/api/auth/me` | Authenticated | Verifies JWT session and returns current user profile |
+| `PUT` | `/api/users/profile` | Authenticated | Updates farmer or worker profile fields |
 
 ---
 
 ## 🏗️ Architecture
 
-### Current Implementation Architecture
-
-AgriConnect currently operates as a decoupled client-server architecture:
-- **Client:** React 18 single-page application utilizing `AgriContext` for centralized application state (Jobs, Applications, User Session) and component rendering.
-- **Server:** Node.js Express server providing health checks and AI helper endpoints (`/api/ai/recommendations`, `/api/ai/voice-assistant`) with Mongoose database configuration.
-
 ```mermaid
 graph TD
-    User[User: Farmer / Worker] -->|Browser Interaction| ReactApp[React 18 Frontend - Vite]
-    ReactApp -->|State Management| Context[AgriContext - Local State & LocalStorage]
-    ReactApp -->|HTTP REST Requests| ExpressServer[Node.js / Express Server]
-    ExpressServer -->|Routes| AIRoutes[/api/ai Routes]
-    AIRoutes -->|Controllers| AIController[AI Controller]
-    AIController -->|Service| AIService[AI Service Heuristics]
-    ExpressServer -->|Database Config| MongoDB[(MongoDB Database)]
-```
+    subgraph Frontend["React 18 Frontend (Vite)"]
+        Landing["Landing Page (/)"]
+        JobSearch["Job Discovery (/jobs)"]
+        JobView["Job Details (/jobs/:id)"]
+        WorkerApps["My Applications (/worker/applications)"]
+        WorkerDash["Worker Dashboard (/worker)"]
+        FarmerPortal["Farmer Portal (/farmer/*)"]
+    end
 
-### Planned Full-Stack Architecture
+    subgraph Backend["Express.js 5 REST API"]
+        AuthMiddleware["JWT & Role Middleware"]
+        JobCtrl["Job Controller"]
+        AppCtrl["Application Controller"]
+        UserCtrl["Auth / User Controller"]
+    end
 
-```mermaid
-graph TD
-    ClientApp[React Frontend / Mobile Web] -->|REST API / WebSockets| APIGateway[Node.js / Express API Server]
-    APIGateway -->|Auth Middleware| JWT[JWT Authentication & bcryptjs]
-    APIGateway -->|Data Persistence| MongoDB[(MongoDB Database)]
-    APIGateway -->|Location Services| MapAPI[Location & Geolocation Engine]
-    APIGateway -->|AI Engine| GeminiService[Google Gemini AI Services]
-    GeminiService --> WorkerMatch[Intelligent Worker-Job Matcher]
-    GeminiService --> VoiceProc[Voice & Multilingual Processing]
-    GeminiService --> WageRec[Smart Wage Recommendation]
-    GeminiService --> DemandPred[Labor Demand Forecasting]
-    APIGateway -->|Messaging| NotificationGateway[SMS / WhatsApp Gateway]
+    subgraph Database["MongoDB Database"]
+        UserCol[("Users Collection")]
+        JobCol[("Jobs Collection")]
+        AppCol[("Applications Collection (Compound Unique Index)")]
+    end
+
+    JobSearch -->|GET /api/jobs| JobCtrl
+    JobView -->|GET /api/jobs/:id| JobCtrl
+    JobView -->|POST /api/jobs/:id/apply| AppCtrl
+    WorkerApps -->|GET /api/applications/my-applications| AppCtrl
+    WorkerApps -->|PATCH /api/applications/:id/withdraw| AppCtrl
+    FarmerPortal -->|CRUD /api/jobs| JobCtrl
+
+    JobCtrl --> AuthMiddleware
+    AppCtrl --> AuthMiddleware
+    AuthMiddleware --> UserCol
+    JobCtrl --> JobCol
+    AppCtrl --> AppCol
+    AppCol -.->|References| JobCol
+    AppCol -.->|References| UserCol
 ```
 
 ---
@@ -215,49 +279,71 @@ graph TD
 AgriConnect/
 ├── client/                               # React Frontend Application
 │   ├── src/
-│   │   ├── assets/                       # Static assets and media
+│   │   ├── assets/                       # Static media and branding
 │   │   ├── components/
 │   │   │   ├── common/
 │   │   │   │   ├── AIAssistantWidget.jsx # Multilingual & Voice AI Widget
-│   │   │   │   ├── Footer.jsx            # Application Footer component
-│   │   │   │   └── Navbar.jsx            # Main Navigation bar component
-│   │   │   ├── farmer/
-│   │   │   │   └── PostJobModal.jsx      # Job Creation modal component
-│   │   │   ├── jobs/                     # Job listing components (future)
-│   │   │   └── worker/                   # Worker specific components (future)
+│   │   │   │   ├── Footer.jsx            # Application footer
+│   │   │   │   ├── Navbar.jsx            # Header navigation with role awareness
+│   │   │   │   ├── ProtectedRoute.jsx    # Role-based route guard
+│   │   │   │   └── UserProfileModal.jsx  # Profile editing modal
+│   │   │   └── farmer/
+│   │   │       └── PostJobModal.jsx      # Job creation modal
 │   │   ├── context/
-│   │   │   └── AgriContext.jsx           # React Context for Jobs, Apps & State
+│   │   │   ├── AgriContext.jsx           # App-wide shared state
+│   │   │   └── AuthContext.jsx           # User session & JWT management
 │   │   ├── pages/
 │   │   │   ├── auth/
-│   │   │   │   └── AuthModal.jsx         # Login & Registration modal
+│   │   │   │   └── AuthModal.jsx         # Login & signup modal
 │   │   │   ├── farmer/
-│   │   │   │   └── FarmerDashboard.jsx   # Farmer control panel & application manager
+│   │   │   │   ├── CreateJob.jsx         # Dedicated job creation page
+│   │   │   │   ├── EditJob.jsx           # Job edit form
+│   │   │   │   ├── FarmerDashboard.jsx   # Farmer overview and metrics
+│   │   │   │   ├── JobDetails.jsx        # Farmer owner job details & controls
+│   │   │   │   └── MyJobs.jsx            # Farmer posted jobs manager
 │   │   │   ├── public/
-│   │   │   │   └── LandingPage.jsx       # Public landing & feature showcase page
+│   │   │   │   └── LandingPage.jsx       # Public landing page
 │   │   │   └── worker/
-│   │   │       └── WorkerDashboard.jsx   # Worker job discovery panel
+│   │   │       ├── JobDiscovery.jsx      # Worker job discovery marketplace (/jobs)
+│   │   │       ├── JobPublicDetails.jsx  # Job details & application (/jobs/:id)
+│   │   │       ├── MyApplications.jsx    # Worker applications manager (/worker/applications)
+│   │   │       └── WorkerDashboard.jsx   # Worker portal with real stats (/worker)
 │   │   ├── services/
-│   │   │   └── api.js                    # API service handler for backend calls
-│   │   ├── App.jsx                       # Root application component
-│   │   ├── index.css                     # Global CSS styling & design system
-│   │   └── main.jsx                      # Vite application entry point
-│   ├── index.html                        # HTML entry point
+│   │   │   ├── api.js                    # Fetch wrapper for auth & profiles
+│   │   │   ├── applicationService.js     # Axios service for worker applications
+│   │   │   └── jobService.js             # Axios service for job discovery & management
+│   │   ├── App.jsx                       # React Router configuration
+│   │   ├── index.css                     # Glassmorphism design system
+│   │   └── main.jsx                      # Vite entry point
 │   ├── package.json                      # Client dependencies & scripts
-│   └── vite.config.js                    # Vite server configuration
+│   └── vite.config.js                    # Vite configuration
 ├── server/                               # Node.js Express Backend Server
 │   ├── config/
-│   │   └── db.js                         # Mongoose MongoDB connection config
+│   │   └── db.js                         # Mongoose MongoDB connection
 │   ├── controllers/
-│   │   └── aiController.js               # AI feature controller handlers
-│   ├── middleware/                       # Express middlewares (future auth/error)
-│   ├── models/                           # Mongoose data models (future)
+│   │   ├── aiController.js               # AI demo handlers
+│   │   ├── applicationController.js      # Worker applications & withdrawal
+│   │   ├── authController.js             # User login, registration, & JWT
+│   │   ├── jobController.js              # Job discovery & farmer management
+│   │   └── userController.js             # User profile endpoints
+│   ├── middleware/
+│   │   └── authMiddleware.js             # protect, optionalProtect, requireRole
+│   ├── models/
+│   │   ├── Application.js                # Application schema with compound unique index
+│   │   ├── Job.js                        # Job schema with validations & indexes
+│   │   └── User.js                       # User schema with bcrypt encryption
 │   ├── routes/
-│   │   └── aiRoutes.js                   # AI API endpoint routes
-│   ├── services/
-│   │   └── aiService.js                  # AI matching & intent parsing logic
-│   ├── .env                              # Backend environment variables
-│   ├── package.json                      # Server dependencies & scripts
-│   └── server.js                         # Express application entry point
+│   │   ├── aiRoutes.js                   # AI demo endpoints
+│   │   ├── applicationRoutes.js          # /api/applications routes
+│   │   ├── authRoutes.js                 # /api/auth routes
+│   │   ├── jobRoutes.js                  # /api/jobs routes
+│   │   └── userRoutes.js                 # /api/users routes
+│   ├── tests/
+│   │   ├── job.test.js                   # Phase 3 automated test suite (12 tests)
+│   │   └── phase4_worker_jobs.test.js    # Phase 4 automated test suite (14 tests)
+│   ├── .env                              # Server environment variables
+│   ├── package.json                      # Server dependencies & test scripts
+│   └── server.js                         # Express entry point
 ├── package.json                          # Monorepo root scripts
 └── README.md                             # Project documentation
 ```
@@ -266,30 +352,17 @@ AgriConnect/
 
 ## ⚙️ Getting Started
 
-Follow these instructions to set up and run AgriConnect on your local environment.
-
 ### Prerequisites
-
-Ensure you have the following installed on your machine:
 - **Node.js**: v18.0.0 or higher ([Download Node.js](https://nodejs.org/))
-- **npm**: v9.0.0 or higher (comes bundled with Node.js)
-- **MongoDB**: (Optional for server DB connection; local instance or MongoDB Atlas connection string)
-
-### Clone Repository
-
-```bash
-git clone YOUR_REPOSITORY_URL
-cd AgriConnect
-```
+- **npm**: v9.0.0 or higher (bundled with Node.js)
+- **MongoDB**: Local MongoDB community server running on port `27017` or MongoDB Atlas URI
 
 ### Install & Run
 
 #### Option 1: Monorepo Combined Execution (Recommended)
-
-Run both client and server simultaneously using the root scripts:
-
+From the project root:
 ```bash
-# Install dependencies for both client and server
+# Install dependencies for both server and client
 npm run install:all
 
 # Launch both server and client concurrently
@@ -300,18 +373,17 @@ The application will be accessible at:
 - **Frontend App:** `http://localhost:5173`
 - **Backend API:** `http://localhost:5000`
 
-#### Option 2: Separate Terminal Execution
-
+#### Option 2: Separate Terminals
 **Terminal 1 — Backend Server:**
 ```bash
-cd server
+cd AgriConnect/server
 npm install
 npm run dev
 ```
 
 **Terminal 2 — Frontend Client:**
 ```bash
-cd client
+cd AgriConnect/client
 npm install
 npm run dev
 ```
@@ -320,208 +392,155 @@ npm run dev
 
 ## 🔐 Environment Variables
 
-The backend server relies on configuration variables defined in `server/.env`.
-
-### Example Server Environment File (`server/.env`)
+Defined in `AgriConnect/server/.env`:
 
 ```env
-# Server Port
 PORT=5000
-
-# Node Environment
+MONGODB_URI=mongodb://localhost:27017/agriconnect
+JWT_SECRET=agriconnect_secure_jwt_secret_key_2026
 NODE_ENV=development
-
-# MongoDB Connection String
-MONGO_URI=mongodb://localhost:27017/agriconnect
-
-# JWT Secret (for upcoming authentication phase)
-JWT_SECRET=your_jwt_secret_key_here
 ```
 
-> [!NOTE]  
-> Do not commit real secret keys, database credentials, or API tokens to version control. The above values are placeholders for local development.
+Frontend defaults to `http://localhost:5000/api` or can be overridden via `VITE_API_BASE_URL`.
 
 ---
 
-## 🚀 Usage
+## 🚀 Usage & User Workflows
 
-### 1. Public Landing Page & Platform Overview
-Open `http://localhost:5173` in your web browser. Explore the core mission, platform features, worker/farmer benefits, and live metrics preview.
+### 1. Farmer Workflow
+1. Log in or create an account with the **Farmer** role.
+2. From the **Farmer Dashboard** (`/farmer`), view real-time counts for active, closed, and completed jobs.
+3. Click **"Post Job"** (`/farmer/jobs/new`), fill in crop specifications, wage rate, headcount, location, and submit.
+4. Manage postings under **"My Jobs"** (`/farmer/jobs`): edit job details, toggle status (`open` ↔ `closed`), mark jobs `completed`, or delete listings.
 
-### 2. View Switching & Authentication Simulation
-- Click **"Farmer Portal"** or **"Worker Portal"** in the navigation header to switch role perspectives.
-- Click **"Login"** or **"Get Started"** to open the interactive authentication modal, simulating account creation for both Farmers and Workers.
-
-### 3. Farmer Workflow
-1. Switch to the **Farmer Dashboard**.
-2. Click **"+ Post New Job"** to launch the job creation modal.
-3. Enter job parameters: Title (e.g. *Wheat Harvesting*), Crop type, Daily wage (e.g. *₹650/day*), Workers needed, Location, and Duration.
-4. Submit the form to add the job listing dynamically.
-5. Review applicant cards under **"Received Worker Applications"** and click **"Accept Application"** or **"Reject"**.
-
-### 4. Worker Workflow
-1. Switch to the **Worker Dashboard**.
-2. Search and filter available farm jobs by location or crop name.
-3. Review job details including daily wage, distance, crop, and total workers needed.
-4. Click **"Apply Now"** to submit an application.
-5. Track application status changes (*Pending* → *Accepted*).
-
-### 5. Multilingual & Voice AI Assistant
-1. Click the floating **AgriConnect AI** badge at the bottom-right corner.
-2. Select your preferred language (e.g., **Kannada**, **Hindi**, **Gujarati**, **English**).
-3. Click the microphone icon to test the simulated voice recognition prompt engine.
+### 2. Worker Workflow
+1. Access **"Find Jobs"** (`/jobs`) as a visitor or logged-in worker.
+2. Use the search bar to locate work by crop, location, or task. Use the filter drawer to narrow down by daily wage range, work type, or start date.
+3. Click **"View Details"** (`/jobs/:id`) to inspect safe farmer profile data and comprehensive specifications.
+4. Click **"Apply for This Job"**, enter an optional message introducing yourself or your crew, and submit.
+5. The button instantly confirms submission and switches to reflect your application status.
+6. Navigate to **"My Applications"** (`/worker/applications`) to review all past submissions, filter by review state, or withdraw a pending application.
+7. Return to the **Worker Dashboard** (`/worker`) to monitor real-time counts of pending reviews and accepted jobs.
 
 ---
 
 ## 🗺️ Roadmap
 
 ```
-PHASE 1 ✅ Landing Page
+PHASE 1 ✅ Landing Page & Design System
         ↓
-PHASE 2 ✅ Authentication + User Profiles (Completed)
+PHASE 2 ✅ Authentication & Role-Based Profiles
         ↓
-PHASE 3 ✅ Farmer Job Posting (Completed)
+PHASE 3 ✅ Farmer Job Posting & Management
         ↓
-PHASE 4 ⏳ Worker Job Discovery + Applications
+PHASE 4 ✅ Worker Job Discovery & Applications (Completed)
         ↓
-PHASE 5 ⏳ Location / Nearby Jobs
+PHASE 5 ⏳ Location / Nearby Jobs (GPS & Maps)
         ↓
-PHASE 6 ⏳ AI Matching
+PHASE 6 ⏳ AI Worker-Job Matching Engine
         ↓
-PHASE 7 ⏳ Voice + Multilingual + Smart Features
+PHASE 7 ⏳ Voice, Multilingual & Smart Predictions
 ```
 
-### Phase 1 — Landing Page ✅
-- [x] Responsive design system & modern hero section
-- [x] Dual-role preview switcher (Farmer & Worker views)
-- [x] Feature highlights & impact statistics
-
-### Phase 2 — Authentication + User Profiles ✅ (Completed)
-- [x] Authentication
-- [x] Farmer registration
-- [x] Worker registration
-- [x] JWT authentication
-- [x] Role-based access
-- [x] User profiles
-- [x] Farmer dashboard foundation
-- [x] Worker dashboard foundation
-
-### Phase 3 — Farmer Job Posting ✅ (Completed)
-- [x] Job Mongoose Schema & REST API endpoints (`/api/jobs`)
-- [x] Farmer Job creation modal and active job management dashboard
-- [x] Job listing cancellation and worker headcount tracking
-
-### Phase 4 — Worker Job Discovery + Applications
-- [ ] Job Application Mongoose Schema & REST API endpoints (`/api/applications`)
-- [ ] Worker job discovery feed with crop & location search filtering
-- [ ] Worker application submission & Farmer acceptance workflow
-
-### Phase 5 — Location / Nearby Jobs
-- [ ] Browser Geolocation API positioning
-- [ ] Distance calculation algorithms & radius filtering
-- [ ] Interactive Map interface (Leaflet / Google Maps integration)
-
-### Phase 6 — AI Matching
-- [ ] ML worker-job match score algorithm
-- [ ] Automated crop skill alignment & daily wage parity scoring
-
-### Phase 7 — Voice + Multilingual + Smart Features
-- [ ] Web Speech API real-time voice input & text-to-speech engine
-- [ ] Google Gemini API integration for LLM queries & dialect translation
-- [ ] Smart wage recommendation engine & labor demand forecasting
+- [x] **Phase 1 — Landing Page**: Modern glassmorphism UI, dual-role preview, hero presentation.
+- [x] **Phase 2 — Authentication & Profiles**: JWT auth, bcryptjs password hashing, farmer/worker profile fields.
+- [x] **Phase 3 — Farmer Job Posting**: Full CRUD for farmer jobs, status transitions, real MongoDB dashboard metrics.
+- [x] **Phase 4 — Worker Job Discovery & Applications**:
+  - [x] Public job discovery API with server-side multi-parameter filtering, debounced search, and pagination.
+  - [x] Safe public job details API with farmer safe projections.
+  - [x] Mongoose Application model with compound unique index preventing duplicates.
+  - [x] Worker job application submission with role checks and validation.
+  - [x] Worker application management with status breakdown and pending application withdrawal.
+  - [x] Responsive `/jobs`, `/jobs/:id`, and `/worker/applications` frontend pages.
+  - [x] Worker dashboard integration with real live statistics from MongoDB.
+- [x] **Phase 5 — Farmer Applicant Management & Hiring**:
+  - [x] Dedicated applicant management view (`/farmer/jobs/:id/applicants`) with status filters and hiring progress bar.
+  - [x] Real-time hiring summary API (`/api/jobs/:id/hiring-summary`) with remaining vacancies.
+  - [x] Safe worker profile projection API (`/api/users/workers/:id`) and interactive profile detail modal.
+  - [x] Privacy-preserving contact protection (phone numbers revealed strictly upon application acceptance).
+  - [x] Concurrency-safe capacity enforcement preventing accepted workers from exceeding `workersRequired`.
+  - [x] Farmer dashboard integration with real database-aggregated metrics (total applications, pending review, accepted workers).
+  - [x] Per-job applicant counts and "Manage Applicants" direct links on job cards.
+  - [x] Worker-side status reflection (`Accepted: Selected for Job`, `Rejected: Not Selected`, `Withdrawn by Worker`, `Pending: Awaiting Farmer Decision`).
+- [ ] **Phase 6 — Location & AI Matching**: Geolocation radius search, distance badges, Leaflet / Google Maps integration, skill-crop alignment algorithm, wage parity scoring.
+- [ ] **Phase 7 — Voice & Multilingual AI**: Web Speech API audio processing, Google Gemini API for regional dialect understanding, labor demand forecasting.
 
 ---
 
-## 🤖 Future AI Capabilities
+## 🔒 Security & Data Integrity
 
-AgriConnect is designed to evolve into an AI-powered agricultural labor ecosystem.
-
-```
-AI Engine Roadmap:
-├── AI Worker Matching
-├── Voice Job Posting
-├── Multilingual Dialect Translation
-├── Smart Wage Recommendation
-└── Labor Demand Prediction
-```
-
-### 1. AI Worker-Job Matching
-Evaluates multiple parameters to recommend the best worker-job matches:
-- **Proximity:** Distance between farm location and worker residence.
-- **Crop Expertise:** Worker's past experience with specific crops (e.g., Paddy, Cotton, Wheat).
-- **Daily Wage Parity:** Alignment between farmer's wage offer and worker expectations.
-- **Availability & Ratings:** Worker availability schedule and historical community ratings.
-
-*Example Output:*
-- Worker A (Wheat Harvesting, 2.5 km away) → **95% Match**
-- Worker B (Cotton Picking, 4.0 km away) → **88% Match**
-
-### 2. Voice Job Posting
-Enables farmers to post complete job listings using natural spoken language:
-1. Farmer speaks into phone microphone: *"I need 5 workers for wheat harvesting in Anand for 3 days at 650 rupees per day."*
-2. Speech-to-Text converts audio stream.
-3. Natural Language Entity Extraction identifies crop (`Wheat`), workers needed (`5`), location (`Anand`), duration (`3 Days`), and wage (`₹650/day`).
-4. Job posting form auto-populates for farmer confirmation.
-
-### 3. Multilingual Support
-Native support for major regional agricultural languages including **Kannada (ಕನ್ನಡ)**, **Hindi (हिंदी)**, **Gujarati (ગુજરાતી)**, **Tamil (தமிழ்)**, **Telugu (తెలుగు)**, **Marathi (मराठी)**, and **English**.
-
-### 4. Smart Wage Recommendation
-Analyzes regional labor market conditions, crop urgency, seasonal trends, and task difficulty to recommend fair daily wage rates to farmers, ensuring competitive compensation and fast hiring.
-
-### 5. Labor Demand Prediction
-Utilizes historical harvest cycles, regional crop sowing data, and weather patterns to forecast labor shortages before peak harvesting seasons, alerting agricultural cooperatives and worker groups in advance.
+- **Server-Enforced Role Separation:** Every action is authenticated and authorized on the backend (`requireRole('farmer')`, `requireRole('worker')`). UI controls reflect server permissions.
+- **Client Identity Verification:** Farmer and worker identities are strictly derived from verified JWT tokens (`req.user._id`), never trusted from client payloads.
+- **Job Ownership Enforcement:** Farmers can only access applicant lists, view applicant profiles, and make hiring decisions for jobs they personally created.
+- **Concurrency-Safe Capacity Enforcement:** Employs an in-process per-job mutex and atomic `Application.findOneAndUpdate({ _id: appId, status: 'pending' }, ...)` verifying `acceptedCount < workersRequired` inside the critical section.
+- **Privacy Protection:** Worker contact phone numbers remain concealed until the application is accepted. Unrelated farmers cannot view worker profiles. Password hashes and emails are strictly excluded from applicant lists.
+- **Strict State Transitions:** Status transitions are permitted only from `pending` to `accepted` or `rejected`. Withdrawn or rejected applications cannot be accepted. Workers cannot accept or reject applications.
+- **ReDoS Protection:** Search keywords and query filters are sanitized through regular expression escaping before regex compilation.
+- **Duplicate Prevention:** Protected at both the application level and the database level through a compound unique index on `{ job: 1, worker: 1 }`.
 
 ---
 
-## 🔒 Security
+## 🧪 Testing & Quality Assurance
 
-### Currently Implemented
-- **Environment Variable Isolation:** Sensitive configurations (`PORT`, `MONGO_URI`, `JWT_SECRET`) stored strictly in `.env` files.
-- **CORS Middleware:** Configured on the Express backend to prevent unauthorized cross-origin access.
-- **Body Sanitization:** Express JSON parsing limits payload sizes.
+AgriConnect maintains automated integration test suites executed against a MongoDB instance:
 
-### Planned Security Infrastructure
-- **Password Hashing:** Salting and hashing passwords using `bcryptjs` before storage.
-- **Stateless Auth:** Secure HTTP-only cookies and Bearer JWT tokens.
-- **Rate Limiting:** Express rate limiting to prevent API abuse and brute-force attacks.
-- **Input Validation:** Schema validation middleware for all API request bodies.
+### Running Test Suites
+```bash
+# Run all Phase 3, Phase 4, and Phase 5 integration test suites (40 automated checks)
+npm test --prefix AgriConnect/server
+
+# Run Phase 5 specific tests
+npm run test:phase5 --prefix AgriConnect/server
+
+# Run Frontend Production Build
+npm run build --prefix AgriConnect/client
+```
+
+### Verified Test Cases (40 Automated Checks + Production Build)
+#### Phase 5 Tests (`tests/phase5_farmer_applicants.test.js` — 14 Scenarios):
+1. A farmer can view applicants for their own job with status breakdowns.
+2. A farmer cannot view another farmer's applicants (403 Forbidden).
+3. Workers cannot access farmer applicant-management endpoints (403 Forbidden).
+4. An owner can accept a pending application and update hiring progress.
+5. An owner can reject a pending application.
+6. A worker cannot accept or reject their own application.
+7. A non-owner farmer cannot change an application status.
+8. Invalid application IDs (malformed and non-existent) are handled safely.
+9. Rejected, accepted, and withdrawn applications cannot be improperly transitioned.
+10. Accepted workers cannot exceed the job's worker requirement (`workersRequired`).
+11. Concurrent parallel acceptance attempts respect job capacity (mutex + atomic update).
+12. Hiring summaries contain accurate database-derived counts and vacancy statistics.
+13. Private user fields (passwords, emails, tokens) are omitted; phone numbers are revealed only for accepted candidates.
+14. Existing job creation, job discovery, and worker applications remain fully operational.
+
+#### Frontend Build Verification:
+15. Vite client production build succeeds with zero errors: `npm run build --prefix AgriConnect/client` (built in ~15s).
 
 ---
 
 ## 🌱 Social Impact
 
-AgriConnect addresses key United Nations Sustainable Development Goals (SDGs), including **SDG 1 (No Poverty)**, **SDG 8 (Decent Work and Economic Growth)**, and **SDG 9 (Industry, Innovation, and Infrastructure)**:
-
-- **Empowering Farmers:** Prevents catastrophic harvest losses by accelerating worker discovery during critical crop cycles.
-- **Uplifting Daily Wage Workers:** Provides transparent, consistent, and dignified employment opportunities close to home.
-- **Eliminating Exploitation:** Bypasses middlemen fees, ensuring 100% of agreed daily wages reach agricultural workers directly.
-- **Digital Inclusion:** Brings modern digital tools to rural farming communities through intuitive UI and voice-first interfaces.
-
----
-
-## 🧪 Testing
-
-Testing infrastructure will be added as the project evolves. Automated unit tests (Jest/React Testing Library) and API integration tests (Supertest) are planned for Phase 2.
+AgriConnect directly contributes to United Nations Sustainable Development Goals:
+- **SDG 1 (No Poverty):** Stabilizes daily wage agricultural incomes by increasing job availability.
+- **SDG 8 (Decent Work & Economic Growth):** Eliminates unorganized broker commissions, ensuring 100% of agreed daily wages reach workers.
+- **SDG 9 (Industry, Innovation, & Infrastructure):** Democratizes digital agricultural technology for smallholder farmers and rural labor communities.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Follow these steps to contribute:
-
-1. **Fork** the repository.
-2. **Create** a feature branch: `git checkout -b feature/AmazingFeature`
-3. **Commit** your changes: `git commit -m 'Add some AmazingFeature'`
-4. **Test** your changes locally.
-5. **Push** to the branch: `git push origin feature/AmazingFeature`
-6. **Open** a Pull Request describing your changes.
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/NewFeature`
+3. Commit your changes: `git commit -m 'Add NewFeature'`
+4. Execute tests locally: `npm test --prefix AgriConnect/server`
+5. Push to the branch: `git push origin feature/NewFeature`
+6. Submit a Pull Request.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **ISC License** as specified in `server/package.json`.
+This project is licensed under the **ISC License**.
 
 ---
 

@@ -452,19 +452,44 @@ export default function MyJobs() {
                   </div>
                 </div>
 
+                {/* Applicant Summary Bar */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.6rem 0.9rem',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  borderRadius: '0.6rem',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  fontSize: '0.82rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#94a3b8' }}>
+                    <Users size={14} color="#60a5fa" />
+                    <span><strong style={{ color: '#ffffff' }}>{job.applicantCounts?.total || 0}</strong> Applicants</span>
+                    {(job.applicantCounts?.pending || 0) > 0 && (
+                      <span style={{ color: '#fbbf24', fontWeight: 600 }}>
+                        ({job.applicantCounts.pending} pending)
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ color: '#34d399', fontWeight: 700 }}>
+                    {job.applicantCounts?.accepted || 0}/{job.workersRequired} Hired
+                  </div>
+                </div>
+
                 {/* Card Actions */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                   
-                  {/* Primary Row: View & Edit */}
+                  {/* Primary Row: Applicants, View & Edit */}
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Link
-                      to={`/farmer/jobs/${job._id}`}
+                      to={`/farmer/jobs/${job._id}/applicants`}
                       style={{
-                        flex: 1,
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        border: '1px solid #10b981',
-                        color: '#34d399',
-                        padding: '0.55rem 0.8rem',
+                        flex: 1.2,
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        border: '1px solid #3b82f6',
+                        color: '#60a5fa',
+                        padding: '0.55rem 0.7rem',
                         borderRadius: '0.6rem',
                         fontWeight: 700,
                         fontSize: '0.85rem',
@@ -476,7 +501,30 @@ export default function MyJobs() {
                         gap: '0.35rem'
                       }}
                     >
-                      <Eye size={15} />
+                      <Users size={14} />
+                      <span>Applicants ({job.applicantCounts?.total || 0})</span>
+                    </Link>
+
+                    <Link
+                      to={`/farmer/jobs/${job._id}`}
+                      style={{
+                        flex: 0.9,
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid #10b981',
+                        color: '#34d399',
+                        padding: '0.55rem 0.7rem',
+                        borderRadius: '0.6rem',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem'
+                      }}
+                    >
+                      <Eye size={14} />
                       <span>View</span>
                     </Link>
 

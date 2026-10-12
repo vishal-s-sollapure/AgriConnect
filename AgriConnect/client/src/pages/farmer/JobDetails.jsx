@@ -341,6 +341,26 @@ export default function JobDetails() {
             borderTop: '1px solid rgba(255, 255, 255, 0.1)',
             paddingTop: '1.5rem'
           }}>
+            <Link
+              to={`/farmer/jobs/${job._id}/applicants`}
+              style={{
+                background: 'rgba(59, 130, 246, 0.15)',
+                border: '1px solid #3b82f6',
+                color: '#60a5fa',
+                padding: '0.8rem 1.5rem',
+                borderRadius: '9999px',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Users size={18} />
+              <span>Manage Applicants</span>
+            </Link>
+
             {job.status !== 'completed' && (
               <Link
                 to={`/farmer/jobs/${job._id}/edit`}

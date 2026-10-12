@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Create Axios Instance with base configuration
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
@@ -37,11 +37,35 @@ api.interceptors.response.use(
 );
 
 /**
- * Job API Service methods for Farmer Job Management
+ * Job API Service methods for Job Discovery and Farmer Job Management
  */
 export const jobService = {
   /**
-   * Create a new job post
+   * Public: Discover open agricultural jobs with server-side filters & search
+   */
+  getOpenJobs: async (params = {}) => {
+    const res = await api.get('/jobs', { params });
+    return res.data;
+  },
+
+  /**
+   * Public / Authenticated: Fetch safe details of a specific job by ID
+   */
+  getJobDetails: async (id) => {
+    const res = await api.get(`/jobs/${id}`);
+    return res.data;
+  },
+
+  /**
+   * Worker: Apply for an open job
+   */
+  applyForJob: async (id, data = {}) => {
+    const res = await api.post(`/jobs/${id}/apply`, data);
+    return res.data;
+  },
+
+  /**
+   * Farmer: Create a new job post
    */
   createJob: async (jobData) => {
     const res = await api.post('/jobs', jobData);
@@ -49,7 +73,7 @@ export const jobService = {
   },
 
   /**
-   * Fetch jobs posted by the authenticated farmer
+   * Farmer: Fetch jobs posted by the authenticated farmer
    */
   getMyJobs: async (params = {}) => {
     const res = await api.get('/jobs/my-jobs', { params });
@@ -57,7 +81,7 @@ export const jobService = {
   },
 
   /**
-   * Fetch details of a specific job by ID
+   * Farmer / General: Fetch details of a specific job by ID
    */
   getJobById: async (id) => {
     const res = await api.get(`/jobs/${id}`);
@@ -65,7 +89,7 @@ export const jobService = {
   },
 
   /**
-   * Update an existing job details
+   * Farmer: Update an existing job details
    */
   updateJob: async (id, jobData) => {
     const res = await api.put(`/jobs/${id}`, jobData);
@@ -73,7 +97,7 @@ export const jobService = {
   },
 
   /**
-   * Change job status (open, closed, completed)
+   * Farmer: Change job status (open, closed, completed)
    */
   updateJobStatus: async (id, status) => {
     const res = await api.patch(`/jobs/${id}/status`, { status });
@@ -81,10 +105,26 @@ export const jobService = {
   },
 
   /**
-   * Delete a job post
+   * Farmer: Delete a job post
    */
   deleteJob: async (id) => {
     const res = await api.delete(`/jobs/${id}`);
+    return res.data;
+  },
+
+  /**
+   * Farmer: Fetch paginated applicants for a job
+   */
+  getJobApplications: async (id, params = {}) => {
+    const res = await api.get(`/jobs/${id}/applications`, { params });
+    return res.data;
+  },
+
+  /**
+   * Farmer: Fetch hiring summary statistics for a job
+   */
+  getJobHiringSummary: async (id) => {
+    const res = await api.get(`/jobs/${id}/hiring-summary`);
     return res.data;
   }
 };

@@ -1,4 +1,7 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Job = require('../models/Job');
+const Application = require('../models/Application');
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -106,6 +109,87 @@ exports.updateUserProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Server error updating user profile.'
+    });
+  }
+};
+
+/**
+ * @desc    Get safe worker profile for hiring review by authorized farmer
+ * @route   GET /api/users/workers/:id
+ * @access  Private (Farmer only)
+ */
+exports.getWorkerProfileForFarmer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid worker ID format'
+      });
+    }
+
+    const worker = await User.findById(id);
+    if (!worker || worker.role !== 'worker') {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    // Authorization: Verify that this worker has applied to at least one job owned by this farmer
+    const farmerJobIds = await Job.find({ farmer: req.user._id }).distinct('_id');
+
+    const applications = await Application.find({
+      worker: worker._id,
+      job: { $in: farmerJobIds }
+    }).populate('job', 'title crop status workersRequired');
+
+    if (applications.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: You are not authorized to view this worker profile as they have not applied to any of your jobs'
+      });
+    }
+
+    // Check if any application by this worker has been accepted by this farmer
+    const hasAcceptedApplication = applications.some(app => app.status === 'accepted');
+
+    // Safe worker profile projection
+    const safeWorker = {
+      _id: worker._id,
+      id: worker._id,
+      name: worker.name,
+      profileImage: worker.profileImage || '',
+      location: worker.location || '',
+      skills: worker.skills || 'General Agriculture',
+      experience: worker.experience || '1-3 Years',
+      availability: worker.availability || 'Full Time',
+      preferredRadius: worker.preferredRadius || '10 km',
+      createdAt: worker.createdAt,
+      // Contact phone is revealed only after at least one application has been accepted
+      phone: hasAcceptedApplication ? worker.phone : null,
+      contactRevealed: hasAcceptedApplication,
+      applications: applications.map(app => ({
+        _id: app._id,
+        jobId: app.job ? app.job._id : null,
+        jobTitle: app.job ? app.job.title : 'Job',
+        crop: app.job ? app.job.crop : '',
+        status: app.status,
+        message: app.message || '',
+        appliedAt: app.createdAt
+      }))
+    };
+
+    return res.status(200).json({
+      success: true,
+      worker: safeWorker
+    });
+  } catch (error) {
+    console.error('getWorkerProfileForFarmer Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while retrieving worker profile'
     });
   }
 };

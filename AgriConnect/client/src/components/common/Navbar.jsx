@@ -65,6 +65,7 @@ export default function Navbar({ onOpenAuth }) {
             gap: '1.8rem'
           }} className="desktop-nav">
             <Link to="/" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: 700, fontSize: '0.98rem' }}>Home</Link>
+            <Link to="/jobs" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>Find Jobs</Link>
             
             {currentUser && currentUser.role === 'farmer' && (
               <>
@@ -78,7 +79,10 @@ export default function Navbar({ onOpenAuth }) {
             )}
 
             {currentUser && currentUser.role === 'worker' && (
-              <Link to="/worker" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>Worker Portal</Link>
+              <>
+                <Link to="/worker" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>Dashboard</Link>
+                <Link to="/worker/applications" style={{ color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, fontSize: '0.98rem' }}>My Applications</Link>
+              </>
             )}
 
             {!currentUser && (
@@ -195,12 +199,20 @@ export default function Navbar({ onOpenAuth }) {
             gap: '1.2rem'
           }}>
             <Link to="/" onClick={() => setMobileMenuOpen(false)} style={{ color: '#ffffff', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Home</Link>
+            <Link to="/jobs" onClick={() => setMobileMenuOpen(false)} style={{ color: '#ffffff', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Find Jobs</Link>
             
             {currentUser && currentUser.role === 'farmer' && (
               <>
                 <Link to="/farmer" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Dashboard</Link>
                 <Link to="/farmer/jobs" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>My Jobs</Link>
                 <Link to="/farmer/jobs/new" onClick={() => setMobileMenuOpen(false)} style={{ color: '#34d399', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 700 }}>+ Post a Job</Link>
+              </>
+            )}
+
+            {currentUser && currentUser.role === 'worker' && (
+              <>
+                <Link to="/worker" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>Dashboard</Link>
+                <Link to="/worker/applications" onClick={() => setMobileMenuOpen(false)} style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '1.1rem', fontWeight: 500 }}>My Applications</Link>
               </>
             )}
 

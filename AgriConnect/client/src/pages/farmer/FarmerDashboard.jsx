@@ -14,7 +14,8 @@ import {
   Info,
   Loader2,
   ArrowRight,
-  Eye
+  Eye,
+  Users
 } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
 import { useAuth } from '../../context/AuthContext';
@@ -32,7 +33,15 @@ export default function FarmerDashboard() {
   
   // Dashboard data states
   const [recentJobs, setRecentJobs] = useState([]);
-  const [stats, setStats] = useState({ total: 0, open: 0, closed: 0, completed: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    open: 0,
+    closed: 0,
+    completed: 0,
+    totalApplications: 0,
+    pendingApplications: 0,
+    acceptedWorkers: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -200,43 +209,55 @@ export default function FarmerDashboard() {
           </div>
         </div>
 
-        {/* Real Job Stats Row */}
+        {/* Real Job & Hiring Stats */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
           gap: '1.25rem',
           marginBottom: '2.5rem'
         }}>
           <div className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a' }}>
-            <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Total Posted Jobs</div>
+            <div style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: 600 }}>Total Posted Jobs</div>
             <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#ffffff', marginTop: '0.4rem' }}>
               {loading ? <Loader2 size={24} className="animate-spin" /> : stats.total}
             </div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '0.2rem' }}>All created listings</div>
+            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '0.2rem' }}>All created listings</div>
           </div>
 
           <div className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-            <div style={{ color: '#34d399', fontSize: '0.85rem', fontWeight: 600 }}>Open / Active Jobs</div>
+            <div style={{ color: '#34d399', fontSize: '0.82rem', fontWeight: 600 }}>Open / Active Jobs</div>
             <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#34d399', marginTop: '0.4rem' }}>
               {loading ? <Loader2 size={24} className="animate-spin" /> : stats.open}
             </div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '0.2rem' }}>Receiving worker discovery</div>
+            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '0.2rem' }}>Receiving worker discovery</div>
           </div>
 
-          <div className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a' }}>
-            <div style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: 600 }}>Closed Jobs</div>
-            <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.4rem' }}>
-              {loading ? <Loader2 size={24} className="animate-spin" /> : stats.closed}
-            </div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '0.2rem' }}>Temporarily paused</div>
-          </div>
-
-          <div className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a' }}>
-            <div style={{ color: '#60a5fa', fontSize: '0.85rem', fontWeight: 600 }}>Completed Jobs</div>
+          <div className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+            <div style={{ color: '#60a5fa', fontSize: '0.82rem', fontWeight: 600 }}>Total Applications</div>
             <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#60a5fa', marginTop: '0.4rem' }}>
-              {loading ? <Loader2 size={24} className="animate-spin" /> : stats.completed}
+              {loading ? <Loader2 size={24} className="animate-spin" /> : (stats.totalApplications || 0)}
             </div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '0.2rem' }}>Successfully finished</div>
+            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '0.2rem' }}>Received across all jobs</div>
+          </div>
+
+          <div className="glass-panel" style={{
+            padding: '1.5rem',
+            background: '#0f172a',
+            border: (stats.pendingApplications || 0) > 0 ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <div style={{ color: '#fbbf24', fontSize: '0.82rem', fontWeight: 700 }}>Pending Review</div>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#fbbf24', marginTop: '0.4rem' }}>
+              {loading ? <Loader2 size={24} className="animate-spin" /> : (stats.pendingApplications || 0)}
+            </div>
+            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '0.2rem' }}>Awaiting hiring decision</div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '1.5rem', background: '#0f172a', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+            <div style={{ color: '#34d399', fontSize: '0.82rem', fontWeight: 700 }}>Accepted Workers</div>
+            <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#34d399', marginTop: '0.4rem' }}>
+              {loading ? <Loader2 size={24} className="animate-spin" /> : (stats.acceptedWorkers || 0)}
+            </div>
+            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: '0.2rem' }}>Hired for agricultural work</div>
           </div>
         </div>
 
@@ -253,7 +274,7 @@ export default function FarmerDashboard() {
                 Recent Job Listings
               </h2>
               <p style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
-                Quick view of your latest job opportunities.
+                Quick view of your latest job opportunities and applicant progress.
               </p>
             </div>
 
@@ -318,20 +339,49 @@ export default function FarmerDashboard() {
                     borderRadius: '0.85rem'
                   }}
                 >
-                  <div>
+                  <div style={{ flex: '1 1 350px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' }}>
                       {getStatusBadge(job.status)}
                       <h4 style={{ color: '#ffffff', fontSize: '1.1rem', fontWeight: 700 }}>{job.title}</h4>
                     </div>
-                    <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', color: '#94a3b8', fontSize: '0.85rem' }}>
+                    <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
                       <span>🌾 {job.crop}</span>
                       <span>⚙️ {job.workType}</span>
                       <span>📍 {job.location}</span>
                       <span>📅 Start: {new Date(job.startDate).toLocaleDateString()}</span>
                     </div>
+
+                    {/* Applicant Count Indicator */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{
+                        background: (job.applicantCounts?.pending || 0) > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                        color: (job.applicantCounts?.pending || 0) > 0 ? '#fbbf24' : '#cbd5e1',
+                        border: (job.applicantCounts?.pending || 0) > 0 ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '0.4rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem'
+                      }}>
+                        <Users size={12} />
+                        <span>{job.applicantCounts?.total || 0} Applicants</span>
+                      </span>
+
+                      {(job.applicantCounts?.pending || 0) > 0 && (
+                        <span style={{ color: '#fbbf24', fontSize: '0.78rem', fontWeight: 600 }}>
+                          • {job.applicantCounts.pending} pending review
+                        </span>
+                      )}
+
+                      <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600 }}>
+                        • {job.applicantCounts?.accepted || 0}/{job.workersRequired} hired
+                      </span>
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap' }}>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ color: '#10b981', fontWeight: 800, fontSize: '1.1rem' }}>
                         ₹{job.wageAmount} <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>/{job.wageType}</span>
@@ -339,25 +389,47 @@ export default function FarmerDashboard() {
                       <div style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{job.workersRequired} workers needed</div>
                     </div>
 
-                    <Link
-                      to={`/farmer/jobs/${job._id}`}
-                      style={{
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        border: '1px solid #10b981',
-                        color: '#34d399',
-                        padding: '0.55rem 1rem',
-                        borderRadius: '0.6rem',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem'
-                      }}
-                    >
-                      <Eye size={15} />
-                      <span>Details</span>
-                    </Link>
+                    <div style={{ display: 'flex', gap: '0.6rem' }}>
+                      <Link
+                        to={`/farmer/jobs/${job._id}/applicants`}
+                        style={{
+                          background: 'rgba(59, 130, 246, 0.15)',
+                          border: '1px solid #3b82f6',
+                          color: '#60a5fa',
+                          padding: '0.55rem 0.9rem',
+                          borderRadius: '0.6rem',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Users size={14} />
+                        <span>Manage Applicants</span>
+                      </Link>
+
+                      <Link
+                        to={`/farmer/jobs/${job._id}`}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          color: '#ffffff',
+                          padding: '0.55rem 0.9rem',
+                          borderRadius: '0.6rem',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Eye size={14} />
+                        <span>Details</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
