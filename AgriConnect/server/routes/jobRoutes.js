@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
   getJobs,
+  getNearbyJobs,
+  geocodeLocationQuery,
   createJob,
   getMyJobs,
   getJobById,
@@ -15,6 +17,12 @@ const {
   getJobHiringSummary
 } = require('../controllers/applicationController');
 const { protect, optionalProtect, requireRole } = require('../middleware/authMiddleware');
+
+// Geocoding helper route (OpenStreetMap Nominatim proxy)
+router.get('/geocode', geocodeLocationQuery);
+
+// Dedicated Nearby Jobs Endpoint
+router.get('/nearby', getNearbyJobs);
 
 // Public Job Discovery
 router.get('/', getJobs);

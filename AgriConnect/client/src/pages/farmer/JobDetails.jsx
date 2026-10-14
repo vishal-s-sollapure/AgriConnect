@@ -295,6 +295,21 @@ export default function JobDetails() {
                 {job.state && <span>State: <strong style={{ color: '#cbd5e1' }}>{job.state}</strong></span>}
               </div>
             )}
+            {job.latitude !== null && job.latitude !== undefined && job.longitude !== null && job.longitude !== undefined && (
+              <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.85rem', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)', padding: '0.2rem 0.6rem', borderRadius: '0.4rem', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                  📍 Coordinates: {job.latitude.toFixed(4)}, {job.longitude.toFixed(4)} {job.locationSource ? `(${job.locationSource})` : ''}
+                </span>
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${job.latitude}&mlon=${job.longitude}#map=15/${job.latitude}/${job.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#34d399', fontSize: '0.85rem', textDecoration: 'underline' }}
+                >
+                  View on OpenStreetMap
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Description */}

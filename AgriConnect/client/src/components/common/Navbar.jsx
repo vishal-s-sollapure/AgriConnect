@@ -6,11 +6,37 @@ import { useAuth } from '../../context/AuthContext';
 import UserProfileModal from './UserProfileModal';
 
 export default function Navbar({ onOpenAuth }) {
+  const navigate = useNavigate();
   const { currentUser: agriUser, logout: agriLogout } = useAgri();
   const { currentUser: authUser, logout: authLogout } = useAuth();
 
   const currentUser = authUser || agriUser;
-  const logout = authLogout || agriLogout;
+
+  const handleLogout = async () => {
+    try {
+      if (typeof authLogout === 'function') {
+        await authLogout();
+      }
+    } catch (e) {
+      console.warn('Auth logout error:', e);
+    }
+
+    try {
+      if (typeof agriLogout === 'function') {
+        agriLogout();
+      }
+    } catch (e) {
+      console.warn('Agri logout error:', e);
+    }
+
+    localStorage.removeItem('agriconnect_user');
+    localStorage.removeItem('agriconnect_token');
+    localStorage.removeItem('agri_user');
+    localStorage.removeItem('agri_token');
+
+    window.dispatchEvent(new Event('agriconnect_logout'));
+    navigate('/');
+  };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -123,7 +149,7 @@ export default function Navbar({ onOpenAuth }) {
 
                 {/* Logout Button */}
                 <button 
-                  onClick={logout}
+                  onClick={handleLogout}
                   style={{
                     background: 'transparent',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -227,7 +253,7 @@ export default function Navbar({ onOpenAuth }) {
                   My Profile ({currentUser.name})
                 </button>
                 <button 
-                  onClick={() => { setMobileMenuOpen(false); logout(); }}
+                  onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
                   style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '0.75rem', borderRadius: '0.75rem', fontWeight: 600 }}
                 >
                   Logout

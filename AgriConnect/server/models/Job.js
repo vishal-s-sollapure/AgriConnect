@@ -83,11 +83,31 @@ const jobSchema = new mongoose.Schema(
     },
     latitude: {
       type: Number,
-      default: null
+      default: null,
+      validate: {
+        validator: function (v) {
+          return v === null || v === undefined || (typeof v === 'number' && !isNaN(v) && v >= -90 && v <= 90);
+        },
+        message: 'Latitude must be between -90 and 90 degrees'
+      }
     },
     longitude: {
       type: Number,
-      default: null
+      default: null,
+      validate: {
+        validator: function (v) {
+          return v === null || v === undefined || (typeof v === 'number' && !isNaN(v) && v >= -180 && v <= 180);
+        },
+        message: 'Longitude must be between -180 and 180 degrees'
+      }
+    },
+    locationSource: {
+      type: String,
+      enum: {
+        values: ['manual', 'geocoded', 'gps', 'map', ''],
+        message: 'Invalid location source'
+      },
+      default: ''
     },
     description: {
       type: String,
@@ -112,5 +132,6 @@ const jobSchema = new mongoose.Schema(
 // Indexes for query performance
 jobSchema.index({ farmer: 1, createdAt: -1 });
 jobSchema.index({ status: 1 });
+jobSchema.index({ status: 1, latitude: 1, longitude: 1 });
 
 module.exports = mongoose.model('Job', jobSchema);

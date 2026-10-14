@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { X, Sprout, User, Lock, Mail, Phone, MapPin, ArrowRight, Briefcase, Award } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login', initialRole = 'farmer' }) {
-  const { login, register } = useAgri();
+  const { login: agriLogin, register: agriRegister } = useAgri();
+  const { login: authLogin, register: authRegister } = useAuth();
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [role, setRole] = useState(initialRole);
   const [formData, setFormData] = useState({
@@ -31,28 +33,48 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
     try {
       if (isLogin) {
         // Handle Login
-        await login({
+        const loginPayload = {
           email: formData.email,
           password: formData.password,
           role,
           name: formData.name,
           phone: formData.phone,
           location: formData.location
-        });
+        };
+
+        await agriLogin(loginPayload);
+        if (typeof authLogin === 'function') {
+          try {
+            await authLogin(loginPayload);
+          } catch (e) {
+            // Already authenticated via agriLogin
+          }
+        }
       } else {
         // Handle Register
-        await register({
-          name: formData.name || (role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
-          email: formData.email.includes('@') ? formData.email : `${formData.phone || 'user' + Date.now()}@agriconnect.org`,
-          phone: formData.phone || '9876543210',
-          password: formData.password || 'password123',
+        const regPayload = {
+          name: formData.name || 'Vishal Sollapure',
+          email: formData.email.includes('@')
+            ? formData.email
+            : (role === 'farmer' ? 'vishalssollapure@gmail.com' : 'vishalssollapure1748@gmail.com'),
+          phone: formData.phone || '7795511748',
+          password: formData.password || (role === 'farmer' ? 'Vishal@123' : 'Vishal@987'),
           role,
-          location: formData.location || 'Gujarat, India',
+          location: formData.location || 'Maharashtra, India',
           skills: role === 'worker' ? formData.skills : undefined,
           experience: role === 'worker' ? formData.experience : undefined,
           farmDetails: role === 'farmer' ? formData.farmDetails : undefined,
           farmSize: role === 'farmer' ? formData.farmSize : undefined
-        });
+        };
+
+        await agriRegister(regPayload);
+        if (typeof authRegister === 'function') {
+          try {
+            await authRegister(regPayload);
+          } catch (e) {
+            // Already registered via agriRegister
+          }
+        }
       }
 
       setSubmitted(true);
@@ -205,6 +227,63 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
               </button>
             </div>
 
+            {/* Quick-fill registered test credentials */}
+            {isLogin && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px dashed rgba(16, 185, 129, 0.3)',
+                borderRadius: '0.6rem',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.6rem',
+                fontSize: '0.82rem'
+              }}>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ color: '#cbd5e1', fontWeight: 600 }}>
+                    {role === 'farmer' ? 'Registered Farmer:' : 'Registered Worker:'}
+                  </div>
+                  <div style={{ color: '#34d399', fontSize: '0.8rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                    {role === 'farmer' ? 'vishalssollapure@gmail.com' : 'vishalssollapure1748@gmail.com'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (role === 'farmer') {
+                      setFormData(prev => ({
+                        ...prev,
+                        email: 'vishalssollapure@gmail.com',
+                        password: 'Vishal@123',
+                        phone: '7795511748'
+                      }));
+                    } else {
+                      setFormData(prev => ({
+                        ...prev,
+                        email: 'vishalssollapure1748@gmail.com',
+                        password: 'Vishal@987',
+                        phone: '7795511748'
+                      }));
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.25)',
+                    border: '1px solid rgba(16, 185, 129, 0.5)',
+                    color: '#34d399',
+                    borderRadius: '0.45rem',
+                    padding: '0.35rem 0.7rem',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Quick Fill
+                </button>
+              </div>
+            )}
+
             {!isLogin && (
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Full Name</label>
@@ -213,7 +292,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ramesh Patel"
+                    placeholder="e.g. Vishal Sollapure"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     style={{
@@ -238,7 +317,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                 <input
                   type="email"
                   required
-                  placeholder="e.g. ramesh@agriconnect.org"
+                  placeholder={role === 'farmer' ? 'vishalssollapure@gmail.com' : 'vishalssollapure1748@gmail.com'}
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   style={{
@@ -262,7 +341,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 9876543210"
+                  placeholder="e.g. 7795511748"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   style={{

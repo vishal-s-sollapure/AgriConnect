@@ -20,8 +20,8 @@ AgriConnect is a technology platform designed to directly connect farmers with l
 - [Problem Statement](#-problem-statement)
 - [Our Solution](#-our-solution)
 - [Features](#-features)
-  - [Currently Implemented (Phases 1–5)](#-currently-implemented-phases-15)
-  - [Planned / Upcoming (Phases 6–7)](#-planned--upcoming-phases-67)
+  - [Currently Implemented (Phases 1–6)](#-currently-implemented-phases-16)
+  - [Planned / Upcoming (Phase 7)](#-planned--upcoming-phase-7)
 - [Tech Stack](#-tech-stack)
 - [API Reference](#-api-reference)
 - [Architecture](#-architecture)
@@ -98,11 +98,23 @@ flowchart LR
 
 ## ✨ Features
 
-### ✅ Currently Implemented (Phases 1–5)
+### ✅ Currently Implemented (Phases 1–6)
 
-The codebase implements Phase 1 (Landing Page), Phase 2 (User Auth & Roles), Phase 3 (Farmer Job Posting & Management), Phase 4 (Worker Job Discovery & Applications), and **Phase 5 (Farmer Applicant Management & Hiring)**:
+The codebase implements Phase 1 (Landing Page), Phase 2 (User Auth & Roles), Phase 3 (Farmer Job Posting & Management), Phase 4 (Worker Job Discovery & Applications), Phase 5 (Farmer Applicant Management & Hiring), and **Phase 6 (Location-Based Job Matching & Interactive Mapping)**:
 
-#### 1. Farmer Applicant Management & Hiring (`/farmer/jobs/:id/applicants`) — Phase 5
+#### 1. Location-Based Job Matching & Interactive Map (`/jobs`) — Phase 6
+- **Interactive Leaflet Map (`JobMap.jsx`):** High-performance interactive map utilizing OpenStreetMap tiles with zero paid API keys. Renders custom SVG DivIcons for pinned jobs with custom crop badges and active markers.
+- **Dynamic View Modes:** Workers can toggle between **Split View** (side-by-side interactive map and job list), **List Only**, and **Map Only**.
+- **Interactive Popups & Sync:** Clicking any map pin opens a rich glassmorphism popup displaying the crop, job title, wage rate, location, and a direct link to view full specifications. Selecting a map pin highlights the corresponding job card.
+- **Precise Haversine Distance Calculation:** Server calculates exact great-circle spherical distance in kilometers for jobs with verified coordinates, displayed as clean distance badges (`2.4 km away`).
+- **No Fabricated Distances:** Distances are never calculated or invented for jobs lacking coordinates. Text-only jobs remain discoverable via text search without showing false distance badges.
+- **Nearby Jobs API (`GET /api/jobs/nearby`):** Dedicated endpoint validating latitude, longitude, and radius (capped at 100 km), returning open jobs sorted by ascending distance.
+- **Explicit Worker GPS Permission:** "Use My Location" triggers browser geolocation strictly upon explicit worker button click with clear explanation, error recovery (permission denial, timeouts, unsupported devices), and zero coordinate persistence in the database.
+- **Farmer Location Picker Map (`LocationPickerMap.jsx`):** Embedded map in job creation (`/farmer/jobs/new`) and editing (`/farmer/jobs/:id/edit`) enabling farmers to pin farm locations via map click, draggable marker, or device GPS.
+- **Nominatim Geocoding Proxy (`GET /api/jobs/geocode`):** Secure server-side geocoding proxy converting human-readable farm addresses to coordinates with caching, user-agent compliance, and graceful error handling.
+- **Owner-Protected Coordinate Updates:** Only the verified job owner can edit or clear coordinates. Coordinates can be reset to `null` while preserving the text-based farm location.
+
+#### 2. Farmer Applicant Management & Hiring (`/farmer/jobs/:id/applicants`) — Phase 5
 - **Dedicated Applicant Review View:** Accessible exclusively to the job-owning farmer, displaying job specifications, status badges, and hiring progress.
 - **Hiring Summary & Progress Bar:** Displays real database-aggregated metrics for total applications, pending review, accepted/hired count, remaining vacancies, rejected, and withdrawn counts with a dynamic percentage progress bar.
 - **Capacity Enforcement & Staffing Alerts:** Enforces that accepted workers cannot exceed `workersRequired`. Displays a prominent notification when a job is fully staffed and disables further acceptances.
@@ -112,58 +124,57 @@ The codebase implements Phase 1 (Landing Page), Phase 2 (User Auth & Roles), Pha
 - **Interactive Hiring Decisions:** Single-click "Accept Worker" or "Reject Application" buttons with confirmation modal dialogs preventing accidental decisions and duplicate submissions during in-flight requests.
 - **Status Filter Tabs:** Filter applicant cards by `All`, `Pending`, `Accepted`, `Rejected`, and `Withdrawn` with live counts.
 
-#### 2. Farmer Dashboard & Job Cards Integration — Phase 5
+#### 3. Farmer Dashboard & Job Cards Integration — Phase 5
 - **Real Database-Aggregated Stats:** Live metrics on the farmer dashboard for Total Posted Jobs, Open Jobs, Total Applications Received, Pending Review, and Accepted Workers.
 - **Per-Job Applicant Indicators:** Every job card in the dashboard and "My Jobs" (`/farmer/jobs`) shows live applicant count badges (`X Applicants`, `Y pending`, `Z/W hired`).
 - **Direct Navigation Links:** One-click "Manage Applicants" button on each job card and in the job details action bar.
 
-#### 3. Worker Application Status Reflection — Phase 5
+#### 4. Worker Application Status Reflection — Phase 5
 - **Server-Synced Tracking:** Workers' "My Applications" page reflects real-time server statuses (`Accepted: Selected for Job`, `Rejected: Not Selected`, `Withdrawn by Worker`, `Pending: Awaiting Farmer Decision`).
 - **Live Refetching:** Synchronizes directly with the backend database.
 
-#### 4. Public Job Discovery (`/jobs`) — Phase 4
+#### 5. Public Job Discovery (`/jobs`) — Phase 4
 - **Multi-Parameter Server-Side Filtering:** Filter open jobs by crop type, work type, location (village/district/state), wage type (`daily`, `hourly`, `fixed`), minimum/maximum wage, and start date.
 - **Debounced Keyword Search:** Search bar with 380ms debouncing across title, crop, description, village, district, state, and location with safe regex escaping to prevent ReDoS.
 - **URL Query State Synchronization:** Filter parameters automatically sync with browser URL search parameters (`useSearchParams`), enabling shareable and bookmarkable searches.
 - **Responsive UI States:** Glassmorphism card layout, loading skeletons with shimmer animations, empty states with one-click filter resets, error recovery with retry action, and pagination.
 
-#### 5. Public Job Details (`/jobs/:id`) — Phase 4
-- **Safe Public Inspection:** Complete specifications (crop, work type, wage, start date, duration, workers required, location details, description).
+#### 6. Public Job Details (`/jobs/:id`) — Phase 4
+- **Safe Public Inspection:** Complete specifications (crop, work type, wage, start date, duration, workers required, location details, description, verified coordinates preview).
 - **Safe Farmer Profile Projections:** Exposes only safe public profile data (`name`, `farmName`, `location`, `farmType`), strictly omitting confidential contact details (`email`, `phone`) and credential hashes.
 - **Worker Application Flow:** Interactive application modal with optional message (max 500 characters with live counter).
 - **Duplicate Prevention:** Dynamically checks if the logged-in worker has already applied and renders the current application status badge (`Pending`, `Accepted`, `Rejected`, `Withdrawn`) instead of an active application button.
 - **Role Enforcement:** Farmers are clearly shown an informational notice that applications are reserved for worker accounts; unauthenticated visitors are prompted to sign in with return navigation.
 
-#### 6. Worker Application Management (`/worker/applications`) — Phase 4
+#### 7. Worker Application Management (`/worker/applications`) — Phase 4
 - **Application Tracking:** Dedicated dashboard with status tabs (`All`, `Pending`, `Accepted`, `Rejected`, `Withdrawn`) and accessible visual indicators.
 - **Application Withdrawal:** Workers can withdraw their own pending applications with an interactive confirmation modal, updating UI state instantly.
 - **Job Status Monitoring:** Displays current status of the target job (`Active`, `Closed`, `Completed`) with direct links to view full job details.
 
-#### 7. Worker Dashboard Integration (`/worker`) — Phase 4
+#### 8. Worker Dashboard Integration (`/worker`) — Phase 4
 - **Live MongoDB Metrics:** Real backend statistics for Total Applications, Pending Review, and Accepted Jobs (no hardcoded or placeholder values).
 - **Recent Applications Preview:** Fast preview of the worker's latest farm job applications with status badges and quick links.
 - **Shortcuts & Tabs:** Rapid navigation shortcuts to browse open jobs, manage applications, and edit worker profile.
 
-#### 8. Farmer Job Posting & Management (`/farmer/*`) — Phase 3
-- **Job Creation (`/farmer/jobs/new`):** Server-validated job creation with crop type, work type, wage amount, duration, start date, headcount, and location.
+#### 9. Farmer Job Posting & Management (`/farmer/*`) — Phase 3
+- **Job Creation (`/farmer/jobs/new`):** Server-validated job creation with crop type, work type, wage amount, duration, start date, headcount, location picker map, and coordinates.
 - **My Jobs Management (`/farmer/jobs`):** Full list view of posted jobs with status filters (`open`, `closed`, `completed`), search, pagination, and confirmation modals.
-- **Job Details View (`/farmer/jobs/:id`):** Owner-protected job management view with editing, status transitions (`open` ↔ `closed`, `completed`), and job deletion.
+- **Job Details View (`/farmer/jobs/:id`):** Owner-protected job management view with editing, coordinates breakdown, status transitions (`open` ↔ `closed`, `completed`), and job deletion.
 - **Live Dashboard Stats:** Real-time metrics showing total, open, closed, and completed jobs.
 
-#### 9. JWT Authentication & Role-Based Access Control — Phase 2
+#### 10. JWT Authentication & Role-Based Access Control — Phase 2
 - **Secure Auth API:** Registration and login with `bcryptjs` password hashing and JWT token issuance.
 - **Role Isolation:** Server-side middleware (`protect`, `requireRole('farmer')`, `requireRole('worker')`) enforcing strict role separation.
 - **User Profiles:** Editable farmer (`farmName`, `farmType`) and worker profiles (`skills`, `experience`, `availability`, `preferredRadius`).
 
-#### 10. Modern UI System & Public Landing Page — Phase 1
+#### 11. Modern UI System & Public Landing Page — Phase 1
 - **Glassmorphism Theme:** Custom vanilla CSS design system utilizing CSS variables (`--primary: #10b981`, `--accent: #84cc16`), dark mode, and organic blur panels.
 - **Interactive Landing Page:** Role switcher, impact statistics, how-it-works workflow, and floating voice AI assistant preview.
 
 ---
 
-### 🚀 Planned / Upcoming (Phases 6–7)
+### 🚀 Planned / Upcoming (Phase 7)
 
-- **Phase 6: AI Matching & Geolocation Discovery:** ML-driven worker-job compatibility scoring, automated crop skill alignment, wage parity suggestions, and interactive map interface (Leaflet / Google Maps) with radius filtering.
 - **Phase 7: Voice + Multilingual + Smart Features:** Web Speech API integration, Google Gemini API for regional dialect translation (Kannada, Hindi, Gujarati, Tamil, Telugu, Marathi), smart wage recommendation engine, and labor demand forecasting.
 
 ---
@@ -339,8 +350,12 @@ AgriConnect/
 │   │   ├── jobRoutes.js                  # /api/jobs routes
 │   │   └── userRoutes.js                 # /api/users routes
 │   ├── tests/
-│   │   ├── job.test.js                   # Phase 3 automated test suite (12 tests)
-│   │   └── phase4_worker_jobs.test.js    # Phase 4 automated test suite (14 tests)
+│   │   ├── phase1_landing_page.test.js   # Phase 1 automated test suite (10 tests)
+│   │   ├── phase2_user_auth.test.js      # Phase 2 automated test suite (22 tests)
+│   │   ├── phase3_farmer_jobs.test.js    # Phase 3 automated test suite (12 tests)
+│   │   ├── phase4_worker_jobs.test.js    # Phase 4 automated test suite (14 tests)
+│   │   ├── phase5_farmer_applicants.test.js # Phase 5 automated test suite (14 tests)
+│   │   └── job.test.js                   # Phase 3 legacy test runner
 │   ├── .env                              # Server environment variables
 │   ├── package.json                      # Server dependencies & test scripts
 │   └── server.js                         # Express entry point
@@ -407,6 +422,16 @@ Frontend defaults to `http://localhost:5000/api` or can be overridden via `VITE_
 
 ## 🚀 Usage & User Workflows
 
+### 🔑 Registered Demo Accounts
+
+| Role | Email Address | Password | Mobile Number | Description |
+|---|---|---|---|---|
+| **Farmer** 👨‍🌾 | `vishalssollapure@gmail.com` | `Vishal@123` | `7795511748` | Farm owner: post farm jobs, inspect applicants, set coordinates |
+| **Worker** 👷 | `vishalssollapure1748@gmail.com` | `Vishal@987` | `7795511748` | Agricultural worker: find nearby jobs, use GPS, apply for jobs |
+
+> [!TIP]
+> In the Login modal, you can click the **"Quick Fill"** button under the role switcher to automatically populate these credentials with one click!
+
 ### 1. Farmer Workflow
 1. Log in or create an account with the **Farmer** role.
 2. From the **Farmer Dashboard** (`/farmer`), view real-time counts for active, closed, and completed jobs.
@@ -433,11 +458,11 @@ PHASE 2 ✅ Authentication & Role-Based Profiles
         ↓
 PHASE 3 ✅ Farmer Job Posting & Management
         ↓
-PHASE 4 ✅ Worker Job Discovery & Applications (Completed)
+PHASE 4 ✅ Worker Job Discovery & Applications
         ↓
-PHASE 5 ⏳ Location / Nearby Jobs (GPS & Maps)
+PHASE 5 ✅ Farmer Applicant Management & Hiring
         ↓
-PHASE 6 ⏳ AI Worker-Job Matching Engine
+PHASE 6 ✅ Location-Based Job Matching & Interactive Mapping (Completed)
         ↓
 PHASE 7 ⏳ Voice, Multilingual & Smart Predictions
 ```
@@ -462,7 +487,15 @@ PHASE 7 ⏳ Voice, Multilingual & Smart Predictions
   - [x] Farmer dashboard integration with real database-aggregated metrics (total applications, pending review, accepted workers).
   - [x] Per-job applicant counts and "Manage Applicants" direct links on job cards.
   - [x] Worker-side status reflection (`Accepted: Selected for Job`, `Rejected: Not Selected`, `Withdrawn by Worker`, `Pending: Awaiting Farmer Decision`).
-- [ ] **Phase 6 — Location & AI Matching**: Geolocation radius search, distance badges, Leaflet / Google Maps integration, skill-crop alignment algorithm, wage parity scoring.
+- [x] **Phase 6 — Location-Based Job Matching & Interactive Mapping**:
+  - [x] Leaflet interactive map integration with OpenStreetMap tiles and custom SVG DivIcons.
+  - [x] Farmer map-based location picker with drag-and-drop marker and device GPS capture.
+  - [x] Worker location search with village, district, state, and optional browser GPS trigger.
+  - [x] Great-circle spherical Haversine distance calculations and radius filtering (up to 100 km).
+  - [x] Formatted distance badges (`2.4 km away`) for coordinate-backed jobs.
+  - [x] Dedicated nearby jobs endpoint (`GET /api/jobs/nearby`).
+  - [x] Nominatim geocoding proxy (`GET /api/jobs/geocode`) with rate limiting and caching.
+  - [x] Full backwards-compatibility for text-only jobs (no fabricated coordinates or distances).
 - [ ] **Phase 7 — Voice & Multilingual AI**: Web Speech API audio processing, Google Gemini API for regional dialect understanding, labor demand forecasting.
 
 ---
@@ -471,12 +504,13 @@ PHASE 7 ⏳ Voice, Multilingual & Smart Predictions
 
 - **Server-Enforced Role Separation:** Every action is authenticated and authorized on the backend (`requireRole('farmer')`, `requireRole('worker')`). UI controls reflect server permissions.
 - **Client Identity Verification:** Farmer and worker identities are strictly derived from verified JWT tokens (`req.user._id`), never trusted from client payloads.
-- **Job Ownership Enforcement:** Farmers can only access applicant lists, view applicant profiles, and make hiring decisions for jobs they personally created.
+- **Job Ownership Enforcement:** Farmers can only access applicant lists, view applicant profiles, edit coordinates, and make hiring decisions for jobs they personally created.
 - **Concurrency-Safe Capacity Enforcement:** Employs an in-process per-job mutex and atomic `Application.findOneAndUpdate({ _id: appId, status: 'pending' }, ...)` verifying `acceptedCount < workersRequired` inside the critical section.
 - **Privacy Protection:** Worker contact phone numbers remain concealed until the application is accepted. Unrelated farmers cannot view worker profiles. Password hashes and emails are strictly excluded from applicant lists.
 - **Strict State Transitions:** Status transitions are permitted only from `pending` to `accepted` or `rejected`. Withdrawn or rejected applications cannot be accepted. Workers cannot accept or reject applications.
 - **ReDoS Protection:** Search keywords and query filters are sanitized through regular expression escaping before regex compilation.
 - **Duplicate Prevention:** Protected at both the application level and the database level through a compound unique index on `{ job: 1, worker: 1 }`.
+- **Coordinate Integrity:** Strict boundary validation for latitude (-90 to 90) and longitude (-180 to 180). Neither client nor server ever persists worker real-time GPS coordinates to the database.
 
 ---
 
@@ -486,18 +520,29 @@ AgriConnect maintains automated integration test suites executed against a Mongo
 
 ### Running Test Suites
 ```bash
-# Run all Phase 3, Phase 4, and Phase 5 integration test suites (40 automated checks)
+# Run all Phase 1 through Phase 6 integration test suites (87 automated checks)
 npm test --prefix AgriConnect/server
 
-# Run Phase 5 specific tests
+# Run specific Phase test suites
+npm run test:phase1 --prefix AgriConnect/server
+npm run test:phase2 --prefix AgriConnect/server
+npm run test:phase3 --prefix AgriConnect/server
+npm run test:phase4 --prefix AgriConnect/server
 npm run test:phase5 --prefix AgriConnect/server
+npm run test:phase6 --prefix AgriConnect/server
 
 # Run Frontend Production Build
 npm run build --prefix AgriConnect/client
 ```
 
-### Verified Test Cases (40 Automated Checks + Production Build)
-#### Phase 5 Tests (`tests/phase5_farmer_applicants.test.js` — 14 Scenarios):
+### Verified Test Cases (87 Automated Checks + Production Build)
+#### Test Suites Overview:
+- **Phase 1 (`tests/phase1_landing_page.test.js` — 10 Scenarios):** API health check, Express router exports, AI match score calculation, AI recommendation ranking, voice assistant multilingual intent routing, and server environment validation.
+- **Phase 2 (`tests/phase2_user_auth.test.js` — 22 Scenarios):** Worker and farmer registration, mandatory field validations, role/email/password validations, duplicate prevention, bcrypt password hashing, login auth, JWT issuance, `protect` & `requireRole` middleware, profile retrieval & updating, role immutability, and safe applicant worker inspection.
+- **Phase 3 (`tests/phase3_farmer_jobs.test.js` — 12 Scenarios):** Farmer job creation, MongoDB persistence, worker job creation prevention (403), unauthenticated rejection (401), numeric validations, job isolation, cross-farmer edit/delete protection, invalid ObjectId handling, job closing/reopening, and dashboard metrics.
+- **Phase 4 (`tests/phase4_worker_jobs.test.js` — 14 Scenarios):** Public job discovery, multi-param filtering, pagination metadata, safe farmer projections, worker application submission, duplicate prevention, closed job application rejection, application isolation, withdrawal lifecycle, and status immutability.
+- **Phase 5 (`tests/phase5_farmer_applicants.test.js` — 14 Scenarios):** Owner applicant review, multi-tenant security barrier, worker permission enforcement, hiring accept/reject actions, capacity constraint enforcement, concurrency safety (mutex + atomic updates), dynamic hiring summary calculations, and private data concealment.
+- **Phase 6 (`tests/phase6_location_matching.test.js` — 15 Scenarios):** Location-based matching, text-only backwards compatibility, coordinate range validation (-90/90, -180/180), distance-sorted nearby endpoint (`/api/jobs/nearby`), radius filtering (up to 100 km), exclusion of closed/far jobs, multi-param filter composition, non-owner coordinate tampering rejection, coordinate clearing to null, and Haversine mathematical accuracy.
 1. A farmer can view applicants for their own job with status breakdowns.
 2. A farmer cannot view another farmer's applicants (403 Forbidden).
 3. Workers cannot access farmer applicant-management endpoints (403 Forbidden).

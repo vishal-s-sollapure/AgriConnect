@@ -360,6 +360,27 @@ export default function JobPublicDetails({ onOpenAuth }) {
                     {job.location}
                   </span>
                 </div>
+                {job.latitude !== null && job.latitude !== undefined && job.longitude !== null && job.longitude !== undefined && (
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${job.latitude}&mlon=${job.longitude}#map=14/${job.latitude}/${job.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      color: '#38bdf8',
+                      padding: '0.25rem 0.65rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.8rem',
+                      border: '1px solid rgba(56, 189, 248, 0.25)',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <span>📍 Verified Map Coordinates: {job.latitude.toFixed(4)}, {job.longitude.toFixed(4)}</span>
+                  </a>
+                )}
               </div>
             </div>
 

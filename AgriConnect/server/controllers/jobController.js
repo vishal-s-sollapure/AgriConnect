@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const Job = require('../models/Job');
 const Application = require('../models/Application');
+const {
+  isValidLatitude,
+  isValidLongitude,
+  calculateHaversineDistance,
+  geocodeLocation
+} = require('../utils/geoUtils');
 
 /**
  * Helper to safely escape regular expressions to avoid ReDoS
@@ -10,7 +16,7 @@ function escapeRegex(text) {
 }
 
 /**
- * @desc    Get all open jobs with server-side filtering, search, and pagination
+ * @desc    Get all open jobs with server-side filtering, search, location matching, and pagination
  * @route   GET /api/jobs
  * @access  Public
  */
@@ -21,12 +27,19 @@ exports.getJobs = async (req, res) => {
       crop,
       workType,
       location,
+      village,
+      district,
+      state,
       minWage,
       maxWage,
       wageType,
       startDate,
       page,
-      limit
+      limit,
+      lat,
+      lng,
+      radiusKm,
+      sortByDistance
     } = req.query;
 
     // Filter strictly for published open jobs
@@ -59,7 +72,22 @@ exports.getJobs = async (req, res) => {
       query.workType = new RegExp(`^${sanitizedWorkType}$`, 'i');
     }
 
-    // Filter by Location
+    // Filter by Village
+    if (village && typeof village === 'string' && village.trim()) {
+      query.village = new RegExp(escapeRegex(village.trim()), 'i');
+    }
+
+    // Filter by District
+    if (district && typeof district === 'string' && district.trim()) {
+      query.district = new RegExp(escapeRegex(district.trim()), 'i');
+    }
+
+    // Filter by State
+    if (state && typeof state === 'string' && state.trim()) {
+      query.state = new RegExp(escapeRegex(state.trim()), 'i');
+    }
+
+    // Filter by Location text
     if (location && typeof location === 'string' && location.trim()) {
       const sanitizedLocation = escapeRegex(location.trim());
       const locRegex = new RegExp(sanitizedLocation, 'i');
@@ -100,17 +128,123 @@ exports.getJobs = async (req, res) => {
       }
     }
 
+    // Coordinate & Location matching validations
+    const hasLat = lat !== undefined && lat !== null && lat !== '';
+    const hasLng = lng !== undefined && lng !== null && lng !== '';
+
+    if (hasLat !== hasLng) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both latitude (lat) and longitude (lng) must be provided together'
+      });
+    }
+
+    let searchLat = null;
+    let searchLng = null;
+    let radiusNum = null;
+
+    if (hasLat && hasLng) {
+      if (!isValidLatitude(lat) || !isValidLongitude(lng)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid coordinates: lat must be between -90 and 90, lng between -180 and 180'
+        });
+      }
+      searchLat = Number(lat);
+      searchLng = Number(lng);
+
+      if (radiusKm !== undefined && radiusKm !== null && radiusKm !== '') {
+        radiusNum = Number(radiusKm);
+        if (isNaN(radiusNum) || radiusNum <= 0 || radiusNum > 100) {
+          return res.status(400).json({
+            success: false,
+            message: 'Radius must be a positive number up to 100 km'
+          });
+        }
+      }
+    }
+
     // Pagination
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
     const skip = (pageNum - 1) * limitNum;
 
+    // Case 1: Geolocation / coordinate-aware search
+    if (searchLat !== null && searchLng !== null) {
+      const allMatchingJobs = await Job.find(query)
+        .sort({ createdAt: -1 })
+        .populate('farmer', 'name farmName location farmType');
+
+      // Calculate distances for jobs with valid coordinates
+      const jobsWithDistance = allMatchingJobs.map(job => {
+        const jobObj = job.toObject();
+        if (job.latitude !== null && job.longitude !== null && isValidLatitude(job.latitude) && isValidLongitude(job.longitude)) {
+          const dist = calculateHaversineDistance(searchLat, searchLng, job.latitude, job.longitude);
+          jobObj.distanceKm = dist;
+          jobObj.distance = dist !== null ? `${dist} km away` : null;
+        } else {
+          jobObj.distanceKm = null;
+          jobObj.distance = null;
+        }
+        return jobObj;
+      });
+
+      // If radius filter is requested, filter strictly by distance radius
+      let filteredJobs = jobsWithDistance;
+      if (radiusNum !== null) {
+        filteredJobs = jobsWithDistance.filter(
+          j => j.distanceKm !== null && j.distanceKm <= radiusNum
+        );
+      }
+
+      // Sort by distance if requested or by default when location coordinates provided
+      const shouldSortByDistance = sortByDistance === 'true' || sortByDistance === '1' || radiusNum !== null;
+      if (shouldSortByDistance) {
+        filteredJobs.sort((a, b) => {
+          if (a.distanceKm !== null && b.distanceKm !== null) {
+            return a.distanceKm - b.distanceKm;
+          }
+          if (a.distanceKm !== null) return -1;
+          if (b.distanceKm !== null) return 1;
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+      }
+
+      const total = filteredJobs.length;
+      const paginatedJobs = filteredJobs.slice(skip, skip + limitNum);
+
+      return res.status(200).json({
+        success: true,
+        data: paginatedJobs,
+        jobs: paginatedJobs,
+        searchCenter: {
+          lat: searchLat,
+          lng: searchLng,
+          radiusKm: radiusNum
+        },
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum) || 0
+        }
+      });
+    }
+
+    // Case 2: Standard text/attribute discovery (no coordinates)
     const total = await Job.countDocuments(query);
-    const jobs = await Job.find(query)
+    const rawJobs = await Job.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
       .populate('farmer', 'name farmName location farmType');
+
+    const jobs = rawJobs.map(j => {
+      const jobObj = j.toObject();
+      jobObj.distanceKm = null;
+      jobObj.distance = null;
+      return jobObj;
+    });
 
     return res.status(200).json({
       success: true,
@@ -156,6 +290,7 @@ exports.createJob = async (req, res) => {
       state,
       latitude,
       longitude,
+      locationSource,
       description
     } = req.body;
 
@@ -203,6 +338,39 @@ exports.createJob = async (req, res) => {
         success: false,
         message: 'Duration value must be a positive number'
       });
+    }
+
+    // Coordinate validation
+    const hasLat = latitude !== undefined && latitude !== null && latitude !== '';
+    const hasLng = longitude !== undefined && longitude !== null && longitude !== '';
+
+    if (hasLat !== hasLng) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both latitude and longitude must be provided together'
+      });
+    }
+
+    let parsedLat = null;
+    let parsedLng = null;
+    let parsedSource = '';
+
+    if (hasLat && hasLng) {
+      if (!isValidLatitude(latitude)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Latitude must be a valid number between -90 and 90 degrees'
+        });
+      }
+      if (!isValidLongitude(longitude)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Longitude must be a valid number between -180 and 180 degrees'
+        });
+      }
+      parsedLat = Number(latitude);
+      parsedLng = Number(longitude);
+      parsedSource = locationSource || 'map';
     }
 
     // Date validation
@@ -263,8 +431,9 @@ exports.createJob = async (req, res) => {
       village: village ? village.trim() : '',
       district: district ? district.trim() : '',
       state: state ? state.trim() : '',
-      latitude: latitude ? Number(latitude) : null,
-      longitude: longitude ? Number(longitude) : null,
+      latitude: parsedLat,
+      longitude: parsedLng,
+      locationSource: parsedSource,
       description: description.trim(),
       status: 'open'
     });
@@ -580,6 +749,9 @@ exports.updateJob = async (req, res) => {
       village,
       district,
       state,
+      latitude,
+      longitude,
+      locationSource,
       description
     } = req.body;
 
@@ -655,9 +827,49 @@ exports.updateJob = async (req, res) => {
     }
 
     if (location) job.location = location.trim();
-    if (village !== undefined) job.village = village.trim();
-    if (district !== undefined) job.district = district.trim();
-    if (state !== undefined) job.state = state.trim();
+    if (village !== undefined) job.village = village ? village.trim() : '';
+    if (district !== undefined) job.district = district ? district.trim() : '';
+    if (state !== undefined) job.state = state ? state.trim() : '';
+
+    // Coordinate updates or clearing
+    if (latitude !== undefined || longitude !== undefined) {
+      const isClearing =
+        (latitude === null || latitude === '') && (longitude === null || longitude === '');
+
+      if (isClearing) {
+        job.latitude = null;
+        job.longitude = null;
+        job.locationSource = '';
+      } else {
+        const hasLat = latitude !== undefined && latitude !== null && latitude !== '';
+        const hasLng = longitude !== undefined && longitude !== null && longitude !== '';
+
+        if (!hasLat || !hasLng) {
+          return res.status(400).json({
+            success: false,
+            message: 'Both latitude and longitude must be provided together'
+          });
+        }
+
+        if (!isValidLatitude(latitude)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Latitude must be a valid number between -90 and 90 degrees'
+          });
+        }
+        if (!isValidLongitude(longitude)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Longitude must be a valid number between -180 and 180 degrees'
+          });
+        }
+
+        job.latitude = Number(latitude);
+        job.longitude = Number(longitude);
+        job.locationSource = locationSource || job.locationSource || 'map';
+      }
+    }
+
     if (description) job.description = description.trim();
 
     // Ensure farmer field remains untouched
@@ -930,6 +1142,166 @@ exports.applyForJob = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error while submitting job application'
+    });
+  }
+};
+
+/**
+ * @desc    Dedicated nearby jobs endpoint
+ * @route   GET /api/jobs/nearby
+ * @access  Public
+ */
+exports.getNearbyJobs = async (req, res) => {
+  try {
+    const {
+      lat,
+      lng,
+      radiusKm,
+      crop,
+      workType,
+      search,
+      minWage,
+      maxWage,
+      wageType,
+      page,
+      limit
+    } = req.query;
+
+    if (lat === undefined || lat === null || lat === '' || lng === undefined || lng === null || lng === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Both latitude (lat) and longitude (lng) query parameters are required for nearby search'
+      });
+    }
+
+    if (!isValidLatitude(lat) || !isValidLongitude(lng)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid coordinates: lat must be between -90 and 90, lng between -180 and 180'
+      });
+    }
+
+    const searchLat = Number(lat);
+    const searchLng = Number(lng);
+    let radius = 50; // default 50km
+    if (radiusKm !== undefined && radiusKm !== null && radiusKm !== '') {
+      radius = Number(radiusKm);
+      if (isNaN(radius) || radius <= 0 || radius > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Radius must be a positive number up to 100 km'
+        });
+      }
+    }
+
+    // Base query for open jobs that have coordinates
+    const query = {
+      status: 'open',
+      latitude: { $ne: null },
+      longitude: { $ne: null }
+    };
+
+    if (crop && typeof crop === 'string' && crop.trim()) {
+      query.crop = new RegExp(`^${escapeRegex(crop.trim())}$`, 'i');
+    }
+    if (workType && typeof workType === 'string' && workType.trim()) {
+      query.workType = new RegExp(`^${escapeRegex(workType.trim())}$`, 'i');
+    }
+    if (wageType && ['daily', 'hourly', 'fixed'].includes(wageType)) {
+      query.wageType = wageType;
+    }
+    if (search && typeof search === 'string' && search.trim()) {
+      const sanitized = escapeRegex(search.trim());
+      const regex = new RegExp(sanitized, 'i');
+      query.$or = [
+        { title: regex },
+        { crop: regex },
+        { description: regex },
+        { location: regex },
+        { village: regex },
+        { district: regex },
+        { state: regex }
+      ];
+    }
+    const parsedMinWage = Number(minWage);
+    const parsedMaxWage = Number(maxWage);
+    if (!isNaN(parsedMinWage) && parsedMinWage >= 0) {
+      query.wageAmount = { ...(query.wageAmount || {}), $gte: parsedMinWage };
+    }
+    if (!isNaN(parsedMaxWage) && parsedMaxWage > 0) {
+      query.wageAmount = { ...(query.wageAmount || {}), $lte: parsedMaxWage };
+    }
+
+    const openJobs = await Job.find(query)
+      .populate('farmer', 'name farmName location farmType');
+
+    // Calculate distance and filter by radius
+    const nearbyJobs = [];
+    for (const job of openJobs) {
+      const distanceKm = calculateHaversineDistance(searchLat, searchLng, job.latitude, job.longitude);
+      if (distanceKm !== null && distanceKm <= radius) {
+        const obj = job.toObject();
+        obj.distanceKm = distanceKm;
+        obj.distance = `${distanceKm} km away`;
+        nearbyJobs.push(obj);
+      }
+    }
+
+    // Sort ascending by distance
+    nearbyJobs.sort((a, b) => a.distanceKm - b.distanceKm);
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+    const skip = (pageNum - 1) * limitNum;
+    const paginated = nearbyJobs.slice(skip, skip + limitNum);
+
+    return res.status(200).json({
+      success: true,
+      count: paginated.length,
+      data: paginated,
+      jobs: paginated,
+      searchCenter: { lat: searchLat, lng: searchLng, radiusKm: radius },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: nearbyJobs.length,
+        totalPages: Math.ceil(nearbyJobs.length / limitNum) || 0
+      }
+    });
+  } catch (error) {
+    console.error('Get Nearby Jobs Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while finding nearby jobs'
+    });
+  }
+};
+
+/**
+ * @desc    Geocode address query via OpenStreetMap Nominatim proxy
+ * @route   GET /api/jobs/geocode
+ * @access  Public
+ */
+exports.geocodeLocationQuery = async (req, res) => {
+  try {
+    const { query, q } = req.query;
+    const searchText = query || q || '';
+    if (!searchText.trim()) {
+      return res.status(200).json({ success: true, count: 0, results: [] });
+    }
+
+    const results = await geocodeLocation(searchText.trim());
+    return res.status(200).json({
+      success: true,
+      count: results.length,
+      results
+    });
+  } catch (error) {
+    console.error('Geocode Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during location lookup'
     });
   }
 };

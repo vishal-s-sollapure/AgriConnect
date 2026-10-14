@@ -14,6 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import jobService from '../../services/jobService';
+import LocationPickerMap from '../../components/map/LocationPickerMap';
 
 const CROP_OPTIONS = [
   'Wheat',
@@ -61,6 +62,9 @@ export default function EditJob() {
     village: '',
     district: '',
     state: '',
+    latitude: null,
+    longitude: null,
+    locationSource: '',
     description: ''
   });
 
@@ -100,6 +104,9 @@ export default function EditJob() {
             village: j.village || '',
             district: j.district || '',
             state: j.state || '',
+            latitude: j.latitude ?? null,
+            longitude: j.longitude ?? null,
+            locationSource: j.locationSource || '',
             description: j.description || ''
           });
         } else {
@@ -114,6 +121,16 @@ export default function EditJob() {
     }
     loadJob();
   }, [id]);
+
+  const handleLocationChange = (coords) => {
+    setFormData(prev => ({
+      ...prev,
+      ...coords,
+      ...(coords.village && !prev.village ? { village: coords.village } : {}),
+      ...(coords.district && !prev.district ? { district: coords.district } : {}),
+      ...(coords.state && !prev.state ? { state: coords.state } : {})
+    }));
+  };
 
   const validate = () => {
     const errs = {};
@@ -581,8 +598,92 @@ export default function EditJob() {
                     outline: 'none'
                   }}
                 />
+                {errors.location && <span style={{ color: '#ef4444', fontSize: '0.82rem', marginTop: '0.3rem', display: 'block' }}>{errors.location}</span>}
               </div>
             </div>
+
+            {/* Optional Location breakdown: Village, District, State */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label htmlFor="village" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.4rem' }}>
+                  Village (Optional)
+                </label>
+                <input
+                  id="village"
+                  name="village"
+                  type="text"
+                  placeholder="e.g. Navli"
+                  value={formData.village}
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 0.9rem',
+                    background: 'rgba(30, 41, 59, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.5rem',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="district" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.4rem' }}>
+                  District (Optional)
+                </label>
+                <input
+                  id="district"
+                  name="district"
+                  type="text"
+                  placeholder="e.g. Anand"
+                  value={formData.district}
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 0.9rem',
+                    background: 'rgba(30, 41, 59, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.5rem',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="state" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.4rem' }}>
+                  State (Optional)
+                </label>
+                <input
+                  id="state"
+                  name="state"
+                  type="text"
+                  placeholder="e.g. Gujarat"
+                  value={formData.state}
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 0.9rem',
+                    background: 'rgba(30, 41, 59, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.5rem',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Phase 6: Interactive Map Pinning */}
+            <LocationPickerMap
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onChange={handleLocationChange}
+              initialSearchQuery={[formData.village, formData.district, formData.state].filter(Boolean).join(', ') || formData.location}
+            />
 
             {/* Description */}
             <div>

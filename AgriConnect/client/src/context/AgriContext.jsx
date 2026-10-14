@@ -55,6 +55,13 @@ export function AgriProvider({ children }) {
       }
     }
     fetchUserProfile();
+
+    const handleLogoutSync = () => {
+      setCurrentUser(null);
+      setToken(null);
+    };
+    window.addEventListener('agriconnect_logout', handleLogoutSync);
+    return () => window.removeEventListener('agriconnect_logout', handleLogoutSync);
   }, []);
 
   // Real Login with API backend & auto-registration for demo roles
@@ -77,16 +84,16 @@ export function AgriProvider({ children }) {
     } catch (err) {
       // Auto-register default demo user in MongoDB if login failed
       try {
-        const defaultEmail = credentials.email || (credentials.role === 'farmer' ? 'farmer@agriconnect.org' : 'worker@agriconnect.org');
-        const defaultPassword = credentials.password || 'Password123';
+        const defaultEmail = credentials.email || (credentials.role === 'farmer' ? 'vishalssollapure@gmail.com' : 'vishalssollapure1748@gmail.com');
+        const defaultPassword = credentials.password || (credentials.role === 'farmer' ? 'Vishal@123' : 'Vishal@987');
 
         const regRes = await authApi.register({
-          name: credentials.name || (credentials.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
+          name: credentials.name || 'Vishal Sollapure',
           email: defaultEmail,
-          phone: credentials.phone || '9876543210',
+          phone: credentials.phone || '7795511748',
           password: defaultPassword,
           role: credentials.role || 'farmer',
-          location: credentials.location || 'Anand, Gujarat'
+          location: credentials.location || 'Maharashtra, India'
         });
 
         if (regRes.success && regRes.user) {
@@ -108,11 +115,11 @@ export function AgriProvider({ children }) {
     const fallbackUser = {
       id: 'user-' + Date.now(),
       _id: 'user-' + Date.now(),
-      name: credentials.name || (credentials.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
+      name: credentials.name || 'Vishal Sollapure',
       role: credentials.role || 'farmer',
-      email: credentials.email || (credentials.role === 'farmer' ? 'farmer@agriconnect.org' : 'worker@agriconnect.org'),
-      location: credentials.location || 'Gujarat, India',
-      phone: credentials.phone || '9876543210'
+      email: credentials.email || (credentials.role === 'farmer' ? 'vishalssollapure@gmail.com' : 'vishalssollapure1748@gmail.com'),
+      location: credentials.location || 'Maharashtra, India',
+      phone: credentials.phone || '7795511748'
     };
     setCurrentUser(fallbackUser);
     setIsLoadingAuth(false);
@@ -199,6 +206,7 @@ export function AgriProvider({ children }) {
     localStorage.removeItem('agri_token');
     localStorage.removeItem('agriconnect_user');
     localStorage.removeItem('agriconnect_token');
+    window.dispatchEvent(new Event('agriconnect_logout'));
   };
 
   return (

@@ -17,6 +17,7 @@ import {
 import jobService from '../../services/jobService';
 import { useAuth } from '../../context/AuthContext';
 import { useAgri } from '../../context/AgriContext';
+import LocationPickerMap from '../../components/map/LocationPickerMap';
 
 const CROP_OPTIONS = [
   'Wheat',
@@ -66,6 +67,9 @@ export default function CreateJob() {
     village: '',
     district: '',
     state: '',
+    latitude: null,
+    longitude: null,
+    locationSource: '',
     description: ''
   });
 
@@ -129,17 +133,27 @@ export default function CreateJob() {
     setIsAuthError(false);
   };
 
+  const handleLocationChange = (coords) => {
+    setFormData(prev => ({
+      ...prev,
+      ...coords,
+      ...(coords.village && !prev.village ? { village: coords.village } : {}),
+      ...(coords.district && !prev.district ? { district: coords.district } : {}),
+      ...(coords.state && !prev.state ? { state: coords.state } : {})
+    }));
+  };
+
   const handleAuthenticateFarmer = async () => {
     try {
       setSubmitting(true);
       setServerError('');
       // Authenticate/register demo farmer session with server to obtain a valid JWT token
       await login({
-        email: 'farmer@agriconnect.org',
-        password: 'Password123',
+        email: 'vishalssollapure@gmail.com',
+        password: 'Vishal@123',
         role: 'farmer',
-        name: 'Ramesh Patel',
-        location: formData.location || 'Anand, Gujarat'
+        name: 'Vishal Sollapure',
+        location: formData.location || 'Maharashtra, India'
       });
       setIsAuthError(false);
       setServerError('');
@@ -675,6 +689,14 @@ export default function CreateJob() {
                 />
               </div>
             </div>
+
+            {/* Phase 6: Interactive Map Pinning */}
+            <LocationPickerMap
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onChange={handleLocationChange}
+              initialSearchQuery={[formData.village, formData.district, formData.state].filter(Boolean).join(', ') || formData.location}
+            />
 
             {/* Description */}
             <div>

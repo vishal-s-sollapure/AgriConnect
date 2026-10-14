@@ -52,6 +52,13 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     refreshUser();
+
+    const handleLogoutSync = () => {
+      setCurrentUser(null);
+      setToken(null);
+    };
+    window.addEventListener('agriconnect_logout', handleLogoutSync);
+    return () => window.removeEventListener('agriconnect_logout', handleLogoutSync);
   }, []);
 
   // Login action with automatic backend registration fallback for quick logins
@@ -72,16 +79,16 @@ export function AuthProvider({ children }) {
     } catch (err) {
       // If login failed, attempt to auto-create user in backend MongoDB if it's a demo account
       try {
-        const defaultEmail = credentials.email || (credentials.role === 'farmer' ? 'farmer@agriconnect.org' : 'worker@agriconnect.org');
-        const defaultPassword = credentials.password || 'Password123';
+        const defaultEmail = credentials.email || (credentials.role === 'farmer' ? 'vishalssollapure@gmail.com' : 'vishalssollapure1748@gmail.com');
+        const defaultPassword = credentials.password || (credentials.role === 'farmer' ? 'Vishal@123' : 'Vishal@987');
 
         const regRes = await authApi.register({
-          name: credentials.name || (credentials.role === 'farmer' ? 'Ramesh Patel' : 'Manish Verma'),
+          name: credentials.name || 'Vishal Sollapure',
           email: defaultEmail,
-          phone: credentials.phone || '9876543210',
+          phone: credentials.phone || '7795511748',
           password: defaultPassword,
           role: credentials.role || 'farmer',
-          location: credentials.location || 'Anand, Gujarat'
+          location: credentials.location || 'Maharashtra, India'
         });
 
         if (regRes.success && regRes.user) {
@@ -162,6 +169,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('agriconnect_token');
     localStorage.removeItem('agri_user');
     localStorage.removeItem('agri_token');
+    window.dispatchEvent(new Event('agriconnect_logout'));
   };
 
   return (

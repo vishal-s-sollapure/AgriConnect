@@ -49,6 +49,22 @@ export const jobService = {
   },
 
   /**
+   * Public: Discover nearby agricultural jobs sorted by distance
+   */
+  getNearbyJobs: async (params = {}) => {
+    const res = await api.get('/jobs/nearby', { params });
+    return res.data;
+  },
+
+  /**
+   * Public: Geocode address or village location via backend proxy
+   */
+  geocodeLocation: async (query) => {
+    const res = await api.get('/jobs/geocode', { params: { query } });
+    return res.data;
+  },
+
+  /**
    * Public / Authenticated: Fetch safe details of a specific job by ID
    */
   getJobDetails: async (id) => {

@@ -23,11 +23,28 @@ import UserProfileModal from '../../components/common/UserProfileModal';
 import jobService from '../../services/jobService';
 
 export default function FarmerDashboard() {
+  const navigate = useNavigate();
   const { currentUser: agriUser, logout: agriLogout } = useAgri();
   const { currentUser: authUser, logout: authLogout } = useAuth();
   
   const user = authUser || agriUser;
-  const logout = authLogout || agriLogout;
+
+  const handleLogout = async () => {
+    try {
+      if (typeof authLogout === 'function') await authLogout();
+    } catch (e) {}
+    try {
+      if (typeof agriLogout === 'function') agriLogout();
+    } catch (e) {}
+
+    localStorage.removeItem('agriconnect_user');
+    localStorage.removeItem('agriconnect_token');
+    localStorage.removeItem('agri_user');
+    localStorage.removeItem('agri_token');
+
+    window.dispatchEvent(new Event('agriconnect_logout'));
+    navigate('/');
+  };
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   
@@ -188,7 +205,7 @@ export default function FarmerDashboard() {
             </button>
 
             <button
-              onClick={logout}
+              onClick={handleLogout}
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(239, 68, 68, 0.4)',
