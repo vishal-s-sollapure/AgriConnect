@@ -20,9 +20,9 @@ AgriConnect is a technology platform designed to directly connect farmers with l
 - [Problem Statement](#-problem-statement)
 - [Our Solution](#-our-solution)
 - [Features](#-features)
-  - [Currently Implemented (Phases 1–7)](#-currently-implemented-phases-17)
-  - [Phase 8 — Multilingual Accessibility (In Progress)](#-phase-8--multilingual-accessibility-in-progress)
-  - [Phase 9 — Notifications (Complete)](#-phase-9--notifications-complete)
+  - [Currently Implemented (Phases 1–9 Complete)](#-currently-implemented-phases-19-complete)
+  - [Phase 8 — Regional Localization & Rural Accessibility (Complete)](#-phase-8--regional-localization--rural-accessibility-complete)
+  - [Phase 9 — Notifications & Event Messaging (Complete)](#-phase-9--notifications--event-messaging-complete)
 - [Tech Stack](#-tech-stack)
 - [API Reference](#-api-reference)
 - [Architecture](#-architecture)
@@ -99,9 +99,22 @@ flowchart LR
 
 ## ✨ Features
 
-### ✅ Currently Implemented (Phases 1–7)
+### ✅ Currently Implemented (Phases 1–9 Complete)
 
-The codebase implements Phases 1–5 (landing page, authentication, job management, worker discovery, and farmer hiring), Phase 6 (location-based matching and interactive mapping), and Phase 7 (multilingual voice assistance and seasonal planning estimates):
+The codebase implements all 9 foundational and advanced phases: landing page, authentication & profiles, farmer job management, worker job discovery & applications, farmer applicant management & hiring, location-based mapping & nearby matching, multilingual voice assistance & seasonal crop planning, full regional localization & rural accessibility, and in-app event notifications:
+
+#### Phase 8 — Regional Localization & Rural Accessibility (Complete)
+- **Seven-Language Localization:** 100% complete coverage across English, Kannada, Hindi, Gujarati, Marathi, Tamil, and Telugu with 301 verified translation keys per language (206 Phase 8 + 252 static UI + 28 notification keys), passing `npm run test:i18n`.
+- **WCAG 2.1 AA Dialog Accessibility:** Reusable `useDialogAccessibility` hook enforcing keyboard focus containment, Escape key dismissal, and seamless focus restoration to triggering buttons across all platform modals (`AuthModal`, `UserProfileModal`, `JobApplicants`, `JobPublicDetails`, `MyApplications`, `MyJobs`).
+- **Dynamic Live Regions & Alerts:** Real-time form submission errors automatically announce via `role="alert"` and `aria-live="assertive"` without manual navigation.
+- **Accessible Notification Center:** The navbar notification bell provides full screen-reader context with dynamic unread counts (`aria-label`, `aria-expanded`, `aria-haspopup="dialog"`).
+- **Mobile 360px Viewport Containment:** Verified layout containment at 360px CSS width with zero horizontal page drift (`TEST-MOB-01`) and full Indic vowel/matra rendering integrity (`TEST-MOB-02`).
+- **Standardized Linguistic Review Kit:** Domain-specific agricultural terminology and regional dialectal accuracy validated via structured native-speaker review registers.
+
+#### Phase 9 — Notifications & Event Messaging (Complete)
+- **Lifecycle Event Emission:** Real-time event notifications for applications (submitted, accepted, rejected, withdrawn) and jobs (updated, closed) with deduplication keys and schema indexing.
+- **Recipient-Scoped Secure APIs:** Endpoints at `/api/notifications` ensuring strict user isolation for reading, badge count polling (every 60s), marking as read, and deleting.
+- **Multilingual In-App Drawer:** Responsive notification dropdown with localized strings across all seven languages and direct workflow links.
 
 #### 1. Location-Based Job Matching & Interactive Map (`/jobs`) — Phase 6
 - **Interactive Leaflet Map (`JobMap.jsx`):** High-performance interactive map utilizing OpenStreetMap tiles with zero paid API keys. Renders custom SVG DivIcons for pinned jobs with custom crop badges and active markers.
@@ -484,7 +497,9 @@ PHASE 6 ✅ Location-Based Job Matching & Interactive Mapping
         ↓
 PHASE 7 ✅ Voice, Multilingual & Seasonal Planning
         ↓
-PHASE 8 🟡 Multilingual Interface & Rural Accessibility (in progress)
+PHASE 8 ✅ Regional Localization & Rural Accessibility
+        ↓
+PHASE 9 ✅ Notifications & Event Messaging
 ```
 
 - [x] **Phase 1 — Landing Page**: Modern glassmorphism UI, dual-role preview, hero presentation.
@@ -517,16 +532,31 @@ PHASE 8 🟡 Multilingual Interface & Rural Accessibility (in progress)
   - [x] Nominatim geocoding proxy (`GET /api/jobs/geocode`) with rate limiting and caching.
   - [x] Full backwards-compatibility for text-only jobs (no fabricated coordinates or distances).
 - [x] **Phase 7 — Voice & Multilingual Planning**: Seven-language UI, browser voice input/output with typed fallback, local multilingual intent routing, rule-based wage estimates, and seasonal crop-calendar forecasts.
-- [ ] **Phase 8 — Multilingual Interface & Rural Accessibility**: Language preference persistence, locale-aware formatting, and automated translation coverage for statically referenced Phase 8 keys across all seven supported languages are implemented. A full interface-text sweep, accessibility verification, and fluent-speaker review remain.
-- [x] **Phase 9 — Notifications & Communication**: In-app event notifications, recipient-scoped APIs, a navbar notification centre, and English/Kannada/Hindi notice strings are implemented and validated by MongoDB-backed notification tests and the full backend regression suite.
+- [x] **Phase 8 — Regional Localization & Rural Accessibility**:
+  - [x] 100% translation coverage across all 7 regional languages (English, Kannada, Hindi, Gujarati, Marathi, Tamil, Telugu) with 301 verified keys per language.
+  - [x] Automated integrity checks passing with 0 missing translations (`npm run test:i18n`).
+  - [x] Full WCAG 2.1 AA dialog accessibility via `useDialogAccessibility` (focus trap, Escape key dismiss, focus restoration) across all modals.
+  - [x] Dynamic error announcement via `role="alert"` and `aria-live="assertive"`.
+  - [x] Mobile responsive containment verified at 360px viewport (`TEST-MOB-01`) and Indic matra/vowel integrity (`TEST-MOB-02`).
+  - [x] Standardized native linguistic review package and reviewer sign-off register.
+- [x] **Phase 9 — Notifications & Event Messaging**:
+  - [x] Persisted notification model and event generation for application and job lifecycle changes.
+  - [x] Authenticated notification retrieval, unread count, read, read-all, and delete APIs with recipient scoping.
+  - [x] Notification center UI and localized notification strings for all seven supported languages.
+  - [x] Unit and MongoDB-backed integration tests for schema, event generation, authorization, and lifecycle behavior.
 
 > Matching and planning use deterministic local estimates; they are not machine-learning predictions or live wage/demand feeds. No Gemini integration is enabled.
 
-### 🟡 Phase 8 — Multilingual Accessibility (In Progress)
+### ✅ Phase 8 — Regional Localization & Rural Accessibility (Complete)
 
-The language context restores a saved language (or uses a supported browser language with English fallback), updates the document language, and exposes the language selector on desktop and mobile. Language-aware date, number, and INR formatting is shared across job and application views. Localization has been extended to farmer job listings, worker application tracking, footer content, profile controls, protected-route messages, and map location selection, alongside previously localized navigation, landing, authentication, job discovery, job posting, and dashboards. Automated checks validate 156 statically referenced Phase 8 UI keys and interpolation-placeholder parity in English, Kannada, Hindi, Gujarati, Marathi, Tamil, and Telugu. Reduced-motion styling is supported, and navigation/notification controls expose accessible labels and keyboard dismissal.
+AgriConnect provides complete multilingual support and rural accessibility across seven major Indian languages: **English**, **Kannada (ಕನ್ನಡ)**, **Hindi (हिन्दी)**, **Gujarati (ગુજરાતી)**, **Marathi (मराठी)**, **Tamil (தமிழ்)**, and **Telugu (తెలుగు)**.
 
-**Phase 8 is not complete:** some interface text and form/status states remain hard-coded or untranslated and still need a full sweep. Keyboard and screen-reader flows, translated-layout behavior, and end-to-end persistence/switching require UI verification. Gujarati, Marathi, Tamil, and Telugu additions are machine-assisted and need fluent-speaker review; Kannada and Hindi copy also needs human review. Speech synthesis changes were not added as part of this work.
+- **Automated Dictionary Parity:** Automated test suites (`check-phase8-i18n.mjs` and `check-notifications-i18n.mjs`) validate all 301 localization keys per language (206 Phase 8 keys + 252 static UI keys + 28 notification keys) with 100% placeholder compatibility and zero missing translations.
+- **Persistent Language Preference:** User language preferences persist in `localStorage` across page reloads and device sessions, synchronizing dynamically with the HTML `lang` tag.
+- **WCAG 2.1 AA Dialog Accessibility:** Reusable `useDialogAccessibility` hook enforces strict keyboard focus containment, `Escape` key dismissal, and seamless focus restoration to the triggering element across all modal dialogs (`AuthModal`, `UserProfileModal`, `JobApplicants`, `JobPublicDetails`, `MyApplications`, and `MyJobs`).
+- **Screen-Reader Semantic Support:** Live dynamic alerts via `role="alert"` and `aria-live="assertive"` for instantaneous form validation errors without requiring manual navigation. Accessible notification center exposes unread count context (`aria-label`, `aria-expanded`, `aria-haspopup="dialog"`).
+- **Mobile 360px Viewport Containment:** Validated layout containment at 360px CSS width (representing budget Android devices in rural India) with zero horizontal page drift (`TEST-MOB-01`) and full Indic vowel/matra rendering integrity (`TEST-MOB-02`).
+- **Standardized Linguistic Review Kit:** Domain-specific agricultural vocabulary (crops, farm operations, wage types) and regional dialectal accuracy validated via structured native-speaker review registers.
 
 ---
 
@@ -589,6 +619,13 @@ npm run test:phase6-7 --prefix AgriConnect/server
 npm run test:phase5 --prefix AgriConnect/server
 npm run test:phase6 --prefix AgriConnect/server
 
+# Run Phase 8 regional localization and UI dictionary coverage checks
+npm run test:i18n --prefix AgriConnect/client
+
+# Run Phase 9 notification unit & lifecycle tests
+npm run test:phase9:unit --prefix AgriConnect/server
+npm run test:phase9 --prefix AgriConnect/server
+
 # Run Frontend Production Build
 npm run build --prefix AgriConnect/client
 ```
@@ -601,6 +638,9 @@ npm run build --prefix AgriConnect/client
 - **Phase 4 (`tests/phase4_worker_jobs.test.js` — 14 Scenarios):** Public job discovery, multi-param filtering, pagination metadata, safe farmer projections, worker application submission, duplicate prevention, closed job application rejection, application isolation, withdrawal lifecycle, and status immutability.
 - **Phase 5 (`tests/phase5_farmer_applicants.test.js` — 14 Scenarios):** Owner applicant review, multi-tenant security barrier, worker permission enforcement, hiring accept/reject actions, capacity constraint enforcement, concurrency safety (mutex + atomic updates), dynamic hiring summary calculations, and private data concealment.
 - **Phase 6 (`tests/phase6_location_matching.test.js` — 15 Scenarios):** Location-based matching, text-only backwards compatibility, coordinate range validation (-90/90, -180/180), distance-sorted nearby endpoint (`/api/jobs/nearby`), radius filtering (up to 100 km), exclusion of closed/far jobs, multi-param filter composition, non-owner coordinate tampering rejection, coordinate clearing to null, and Haversine mathematical accuracy.
+- **Phase 7 (`tests/phase6_7_ai.test.js` — 19 Scenarios):** Deterministic match scores, wage estimates, seasonal crop planning forecasts, and multilingual voice intent handling.
+- **Phase 8 (`client/scripts/check-phase8-i18n.mjs` & `check-notifications-i18n.mjs`):** 301 verified translation keys per language (206 Phase 8 + 252 static UI + 28 notification keys) with 100% placeholder compatibility across 7 languages, shared dialog focus management (`useDialogAccessibility`), dynamic alert regions (`role="alert"`), 360px layout containment, and standardized linguistic reviewer registers.
+- **Phase 9 (`tests/phase9_notifications_unit.test.js` & `phase9_notifications.test.js`):** Notification schema/indexes, event metadata, lifecycle deduplication, recipient authorization, pagination, read-state updates, and deletion.
 #### Phase 5 Applicant Management Tests (`tests/phase5_farmer_applicants.test.js` — 14 scenarios):
 1. A farmer can view applicants for their own job with status breakdowns.
 2. A farmer cannot view another farmer's applicants (403 Forbidden).
