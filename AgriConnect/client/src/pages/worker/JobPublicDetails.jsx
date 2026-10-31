@@ -26,6 +26,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAgri } from '../../context/AgriContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatCurrency, formatDate } from '../../i18n/formatters';
+import useDialogAccessibility from '../../hooks/useDialogAccessibility';
 
 export default function JobPublicDetails({ onOpenAuth }) {
   const { id } = useParams();
@@ -49,6 +50,10 @@ export default function JobPublicDetails({ onOpenAuth }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  const applyDialogRef = useDialogAccessibility(showApplyModal, () => {
+    if (!isSubmitting) setShowApplyModal(false);
+  });
 
   const fetchJobDetails = async () => {
     setLoading(true);
@@ -677,14 +682,21 @@ export default function JobPublicDetails({ onOpenAuth }) {
           padding: '1rem',
           zIndex: 100
         }}>
-          <div className="glass-panel" style={{
+          <div
+            ref={applyDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="apply-job-dialog-title"
+            tabIndex={-1}
+            className="glass-panel"
+            style={{
             maxWidth: '520px',
             width: '100%',
             padding: '2.2rem',
             background: 'rgba(15, 23, 42, 0.98)',
             border: '1px solid rgba(16, 185, 129, 0.4)'
           }}>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.3rem' }}>
+            <h3 id="apply-job-dialog-title" style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.3rem' }}>
               Apply for {job.title}
             </h3>
             <p style={{ color: '#94a3b8', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
@@ -692,7 +704,9 @@ export default function JobPublicDetails({ onOpenAuth }) {
             </p>
 
             {submitError && (
-              <div style={{
+              <div
+                role="alert"
+                style={{
                 background: 'rgba(239, 68, 68, 0.15)',
                 border: '1px solid rgba(239, 68, 68, 0.4)',
                 color: '#f87171',
@@ -744,7 +758,7 @@ export default function JobPublicDetails({ onOpenAuth }) {
                   className="btn-secondary"
                   style={{ padding: '0.75rem 1.4rem' }}
                 >
-                  Cancel
+                  {t('p8_cancel', 'Cancel')}
                 </button>
 
                 <button
@@ -756,11 +770,11 @@ export default function JobPublicDetails({ onOpenAuth }) {
                   {isSubmitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      <span>Submitting...</span>
+                      <span>{t('p8_auth_processing', 'Processing...')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Confirm & Apply</span>
+                      <span>{t('apply_now', 'Apply Now')}</span>
                       <Send size={15} />
                     </>
                   )}

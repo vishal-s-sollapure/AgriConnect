@@ -25,6 +25,7 @@ import {
 import jobService from '../../services/jobService';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatDate, formatNumber } from '../../i18n/formatters';
+import useDialogAccessibility from '../../hooks/useDialogAccessibility';
 
 export default function MyJobs() {
   const navigate = useNavigate();
@@ -48,6 +49,12 @@ export default function MyJobs() {
     jobId: null,
     jobTitle: '',
     loading: false
+  });
+
+  const confirmDialogRef = useDialogAccessibility(confirmModal.isOpen, () => {
+    if (!confirmModal.loading) {
+      setConfirmModal({ isOpen: false, type: null, jobId: null, jobTitle: '', loading: false });
+    }
   });
 
   const fetchMyJobs = async () => {
@@ -738,7 +745,14 @@ export default function MyJobs() {
           backdropFilter: 'blur(10px)',
           padding: '1rem'
         }}>
-          <div className="glass-panel" style={{
+          <div
+            ref={confirmDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="myjobs-confirm-dialog-title"
+            tabIndex={-1}
+            className="glass-panel"
+            style={{
             maxWidth: '440px',
             width: '100%',
             padding: '2rem',
@@ -760,26 +774,18 @@ export default function MyJobs() {
               {confirmModal.type === 'delete' ? <Trash2 size={28} /> : <CheckCircle2 size={28} />}
             </div>
 
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
-              {confirmModal.type === 'delete' && 'Delete Job Listing?'}
-              {confirmModal.type === 'complete' && 'Mark Job as Completed?'}
-              {confirmModal.type === 'close' && 'Close Job Listing?'}
-              {confirmModal.type === 'reopen' && 'Reopen Job Listing?'}
+            <h3 id="myjobs-confirm-dialog-title" style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.5rem' }}>
+              {confirmModal.type === 'delete' && t('p8_confirm_delete_job_title', 'Delete job post?')}
+              {confirmModal.type === 'complete' && t('p8_confirm_complete_job_title', 'Mark job as completed?')}
+              {confirmModal.type === 'close' && t('p8_confirm_close_job_title', 'Close job post?')}
+              {confirmModal.type === 'reopen' && t('p8_confirm_reopen_job_title', 'Reopen job post?')}
             </h3>
 
             <p style={{ color: '#94a3b8', fontSize: '0.92rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              {confirmModal.type === 'delete' && (
-                <>Are you sure you want to permanently delete <strong style={{ color: '#ffffff' }}>"{confirmModal.jobTitle}"</strong>? This action cannot be undone.</>
-              )}
-              {confirmModal.type === 'complete' && (
-                <>Are you sure work is finished for <strong style={{ color: '#ffffff' }}>"{confirmModal.jobTitle}"</strong>? Marking as completed locks further edits.</>
-              )}
-              {confirmModal.type === 'close' && (
-                <>Closing <strong style={{ color: '#ffffff' }}>"{confirmModal.jobTitle}"</strong> will temporarily hide it from active worker discovery. You can reopen it anytime.</>
-              )}
-              {confirmModal.type === 'reopen' && (
-                <>Reopening <strong style={{ color: '#ffffff' }}>"{confirmModal.jobTitle}"</strong> will make it active again.</>
-              )}
+              {confirmModal.type === 'delete' && t('p8_confirm_delete_job_message', 'Permanently delete this job posting?')}
+              {confirmModal.type === 'complete' && t('p8_confirm_complete_job_message', 'Marking this job as completed will lock edits.')}
+              {confirmModal.type === 'close' && t('p8_confirm_close_job_message', 'Closing this job will temporarily hide it from new applications.')}
+              {confirmModal.type === 'reopen' && t('p8_confirm_reopen_job_message', 'Reopening will activate the job posting again.')}
             </p>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -812,7 +818,7 @@ export default function MyJobs() {
                   gap: '0.5rem'
                 }}
               >
-                {confirmModal.loading ? <Loader2 size={18} className="animate-spin" /> : 'Confirm'}
+                {confirmModal.loading ? <Loader2 size={18} className="animate-spin" /> : t('p8_confirm', 'Confirm')}
               </button>
               
               <button
@@ -830,7 +836,7 @@ export default function MyJobs() {
                   cursor: 'pointer'
                 }}
               >
-                Cancel
+                {t('p8_cancel', 'Cancel')}
               </button>
             </div>
           </div>

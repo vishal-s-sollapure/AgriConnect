@@ -66,6 +66,7 @@ export default function PostJobModal({ isOpen, onClose }) {
         {/* Close Button */}
         <button 
           onClick={onClose}
+          aria-label="Close"
           style={{
             position: 'absolute',
             top: '1.2rem',

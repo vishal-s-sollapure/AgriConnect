@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAgri } from '../../context/AgriContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatDate } from '../../i18n/formatters';
+import useDialogAccessibility from '../../hooks/useDialogAccessibility';
 
 export default function JobApplicants() {
   const { t, language } = useLanguage();
@@ -74,6 +75,14 @@ export default function JobApplicants() {
     worker: null,
     application: null,
     error: ''
+  });
+
+  const decisionDialogRef = useDialogAccessibility(decisionModal.isOpen, () => {
+    if (!decisionModal.submitting) closeDecisionModal();
+  });
+
+  const workerProfileDialogRef = useDialogAccessibility(profileModal.isOpen, () => {
+    setProfileModal(prev => ({ ...prev, isOpen: false }));
   });
 
   const fetchData = async () => {
@@ -927,7 +936,14 @@ export default function JobApplicants() {
           zIndex: 1000,
           padding: '1.5rem'
         }}>
-          <div className="glass-panel" style={{
+          <div
+            ref={decisionDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="decision-modal-title"
+            tabIndex={-1}
+            className="glass-panel"
+            style={{
             maxWidth: '480px',
             width: '100%',
             padding: '2rem',
@@ -965,7 +981,7 @@ export default function JobApplicants() {
                 </div>
               )}
 
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff' }}>
+              <h3 id="decision-modal-title" style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff' }}>
                 {decisionModal.action === 'accepted' ? 'Accept Worker Application?' : 'Reject Worker Application?'}
               </h3>
               <p style={{ color: '#94a3b8', fontSize: '0.92rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
@@ -992,13 +1008,15 @@ export default function JobApplicants() {
                 fontSize: '0.85rem',
                 color: '#cbd5e1'
               }}>
-                <div>Current Hired: <strong>{summary.accepted} / {summary.workersRequired}</strong></div>
-                <div>Remaining Vacancies after accepting: <strong>{Math.max(0, summary.remainingVacancies - 1)}</strong></div>
+                <div>{t('p8_accepted_workers', 'Accepted workers')}: <strong>{summary.accepted} / {summary.workersRequired}</strong></div>
+                <div>{t('p8_remaining_vacancies', 'Remaining vacancies')}: <strong>{Math.max(0, summary.remainingVacancies - 1)}</strong></div>
               </div>
             )}
 
             {decisionModal.error && (
-              <div style={{
+              <div
+                role="alert"
+                style={{
                 background: 'rgba(239, 68, 68, 0.15)',
                 border: '1px solid rgba(239, 68, 68, 0.4)',
                 borderRadius: '0.6rem',
@@ -1020,7 +1038,7 @@ export default function JobApplicants() {
                 className="btn-secondary"
                 style={{ flex: 1, padding: '0.75rem' }}
               >
-                Cancel
+                {t('p8_cancel', 'Cancel')}
               </button>
 
               <button
@@ -1046,11 +1064,11 @@ export default function JobApplicants() {
                 {decisionModal.submitting ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    <span>Processing...</span>
+                    <span>{t('p8_auth_processing', 'Processing...')}</span>
                   </>
                 ) : (
                   <span>
-                    {decisionModal.action === 'accepted' ? 'Confirm Accept' : 'Confirm Reject'}
+                    {decisionModal.action === 'accepted' ? `${t('p8_confirm', 'Confirm')} (${t('status_accepted', 'Accept')})` : `${t('p8_confirm', 'Confirm')} (${t('status_rejected', 'Reject')})`}
                   </span>
                 )}
               </button>
@@ -1075,7 +1093,14 @@ export default function JobApplicants() {
           zIndex: 1000,
           padding: '1.5rem'
         }}>
-          <div className="glass-panel" style={{
+          <div
+            ref={workerProfileDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="worker-profile-dialog-title"
+            tabIndex={-1}
+            className="glass-panel"
+            style={{
             maxWidth: '560px',
             width: '100%',
             maxHeight: '90vh',
@@ -1088,6 +1113,7 @@ export default function JobApplicants() {
             {/* Close button */}
             <button
               onClick={() => setProfileModal(prev => ({ ...prev, isOpen: false }))}
+              aria-label={t('p8_close', 'Close')}
               style={{
                 position: 'absolute',
                 top: '1.25rem',
@@ -1109,15 +1135,16 @@ export default function JobApplicants() {
 
             {profileModal.loading && (
               <div style={{ padding: '3rem 0', textAlign: 'center', color: '#94a3b8' }}>
+                <h3 id="worker-profile-dialog-title" style={{ display: 'none' }}>Worker Profile</h3>
                 <Loader2 size={36} className="animate-spin" style={{ margin: '0 auto 1rem auto', color: '#10b981' }} />
                 <p>Loading worker profile...</p>
               </div>
             )}
 
             {profileModal.error && (
-              <div style={{ padding: '2rem 0', textAlign: 'center' }}>
+              <div role="alert" style={{ padding: '2rem 0', textAlign: 'center' }}>
                 <AlertTriangle size={36} color="#ef4444" style={{ margin: '0 auto 1rem auto' }} />
-                <h4 style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.1rem' }}>Profile Inaccessible</h4>
+                <h3 id="worker-profile-dialog-title" style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.1rem' }}>Profile Inaccessible</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.4rem' }}>{profileModal.error}</p>
               </div>
             )}
@@ -1148,7 +1175,7 @@ export default function JobApplicants() {
                       <ShieldCheck size={14} />
                       <span>REGISTERED AGRICULTURAL WORKER</span>
                     </div>
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
+                    <h3 id="worker-profile-dialog-title" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
                       {profileModal.worker.name}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.2rem' }}>

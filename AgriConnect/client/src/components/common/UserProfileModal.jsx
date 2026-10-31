@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, User, Phone, MapPin, Briefcase, Award, FileText, CheckCircle } from 'lucide-react';
 import { useAgri } from '../../context/AgriContext';
 import { useLanguage } from '../../context/LanguageContext';
+import useDialogAccessibility from '../../hooks/useDialogAccessibility';
 
 export default function UserProfileModal({ isOpen, onClose }) {
   const { currentUser, updateProfile } = useAgri();
@@ -19,6 +20,10 @@ export default function UserProfileModal({ isOpen, onClose }) {
 
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const dialogRef = useDialogAccessibility(isOpen, () => {
+    if (!saving) onClose();
+  });
 
   useEffect(() => {
     if (currentUser) {
@@ -68,7 +73,14 @@ export default function UserProfileModal({ isOpen, onClose }) {
       backdropFilter: 'blur(12px)',
       padding: '1rem'
     }}>
-      <div className="glass-panel" style={{
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="user-profile-dialog-title"
+        tabIndex={-1}
+        className="glass-panel"
+        style={{
         width: '100%',
         maxWidth: '520px',
         maxHeight: '90vh',
@@ -121,7 +133,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
           }}>
             {currentUser.role === 'farmer' ? '👨‍🌾' : '👷'}
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff' }}>
+          <h2 id="user-profile-dialog-title" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff' }}>
             {currentUser.name}
           </h2>
           <span style={{
@@ -142,7 +154,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
         </div>
 
         {savedSuccess ? (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+          <div role="status" aria-live="polite" style={{ textAlign: 'center', padding: '2rem 0' }}>
             <CheckCircle size={54} color="#10b981" style={{ margin: '0 auto 1rem auto' }} />
             <h3 style={{ color: '#ffffff', fontSize: '1.2rem', fontWeight: 700 }}>{t('p8_profile_saved', 'Profile updated successfully!')}</h3>
           </div>
@@ -218,7 +230,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
             {currentUser.role === 'worker' ? (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Skills & Expertise</label>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_work_type', 'Skills & Expertise')}</label>
                   <div style={{ position: 'relative' }}>
                     <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
@@ -240,7 +252,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Work Experience</label>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_duration', 'Work Experience')}</label>
                   <div style={{ position: 'relative' }}>
                     <Award size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
@@ -264,7 +276,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
             ) : (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Farm Details & Main Crops</label>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_farm_name', 'Farm Details & Main Crops')}</label>
                   <div style={{ position: 'relative' }}>
                     <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
@@ -286,7 +298,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Farm Size</label>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_description', 'Farm Size')}</label>
                   <div style={{ position: 'relative' }}>
                     <Award size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input

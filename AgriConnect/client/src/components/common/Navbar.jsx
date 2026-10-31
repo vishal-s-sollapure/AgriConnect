@@ -175,6 +175,8 @@ export default function Navbar({ onOpenAuth }) {
                 {/* Profile Badge & Button */}
                 <button
                   onClick={() => setProfileModalOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={profileModalOpen}
                   style={{
                     background: currentUser.role === 'farmer' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(132, 204, 22, 0.15)',
                     color: currentUser.role === 'farmer' ? '#34d399' : '#a3e635',
@@ -193,7 +195,7 @@ export default function Navbar({ onOpenAuth }) {
                   aria-label={t('p8_view_profile', 'View and edit profile')}
                 >
                   <User size={15} />
-                  <span>{currentUser.role === 'farmer' ? '👨‍🌾 Farmer' : '👷 Worker'} • {currentUser.name}</span>
+                  <span>{currentUser.role === 'farmer' ? `👨‍🌾 ${t('role_farmer', 'Farmer')}` : `👷 ${t('role_worker', 'Agricultural Worker')}`} • {currentUser.name}</span>
                 </button>
 
                 {/* Logout Button */}

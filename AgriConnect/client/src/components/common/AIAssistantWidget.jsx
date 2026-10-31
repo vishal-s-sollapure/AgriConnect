@@ -50,6 +50,18 @@ export default function AIAssistantWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isListening]);
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   useEffect(() => () => {
     recognitionRef.current?.stop();
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -199,6 +211,9 @@ export default function AIAssistantWidget() {
         <button
           onClick={() => setIsOpen(true)}
           className="animate-float"
+          aria-label={t('voice_assistant', 'AI Voice Assistant')}
+          aria-expanded={false}
+          aria-haspopup="dialog"
           style={{
             background: 'linear-gradient(135deg, #10b981 0%, #84cc16 100%)',
             border: 'none',
@@ -222,6 +237,9 @@ export default function AIAssistantWidget() {
       {/* Floating AI Panel */}
       {isOpen && (
         <div
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="ai-assistant-heading"
           className="glass-panel"
           style={{
             width: '390px',
@@ -263,7 +281,7 @@ export default function AIAssistantWidget() {
                 <Bot size={20} strokeWidth={2.5} />
               </div>
               <div>
-                <h4 style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 800 }}>
+                <h4 id="ai-assistant-heading" style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 800 }}>
                   AgriConnect AI
                 </h4>
                 <div
@@ -287,6 +305,7 @@ export default function AIAssistantWidget() {
                 <button
                   onClick={stopSpeaking}
                   title="Stop audio readout"
+                  aria-label="Stop audio readout"
                   style={{
                     background: 'rgba(239, 68, 68, 0.2)',
                     border: '1px solid #ef4444',
@@ -306,6 +325,8 @@ export default function AIAssistantWidget() {
 
               <button
                 onClick={() => setIsOpen(false)}
+                title={t('p8_close', 'Close')}
+                aria-label={t('p8_close', 'Close')}
                 style={{
                   background: 'rgba(255, 255, 255, 0.08)',
                   border: 'none',
@@ -516,6 +537,7 @@ export default function AIAssistantWidget() {
                   : '0 4px 15px rgba(16, 185, 129, 0.4)'
               }}
               title={isListening ? 'Stop listening' : 'Start speaking'}
+              aria-label={isListening ? 'Stop listening' : 'Start speaking'}
             >
               {isListening ? <MicOff size={20} /> : <Mic size={20} />}
             </button>
@@ -524,6 +546,7 @@ export default function AIAssistantWidget() {
             <input
               type="text"
               placeholder={t('voice_speak_prompt', 'Speak or type in your language...')}
+              aria-label={t('voice_speak_prompt', 'Speak or type in your language...')}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -542,6 +565,8 @@ export default function AIAssistantWidget() {
             {/* Send Button */}
             <button
               onClick={() => handleSend()}
+              title="Send message"
+              aria-label="Send message"
               style={{
                 width: '2.6rem',
                 height: '2.6rem',

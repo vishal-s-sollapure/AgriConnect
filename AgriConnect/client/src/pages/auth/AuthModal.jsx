@@ -3,6 +3,7 @@ import { X, Sprout, User, Lock, Mail, Phone, MapPin, ArrowRight, Briefcase, Awar
 import { useAgri } from '../../context/AgriContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import useDialogAccessibility from '../../hooks/useDialogAccessibility';
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login', initialRole = 'farmer', initialEmail = '' }) {
   const { login: agriLogin, register: agriRegister } = useAgri();
@@ -10,6 +11,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
   const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [role, setRole] = useState(initialRole);
+
+  const dialogRef = useDialogAccessibility(isOpen, () => {
+    if (!isSubmitting) onClose();
+  });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -126,7 +131,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
       backdropFilter: 'blur(12px)',
       padding: '1rem'
     }}>
-      <div className="glass-panel" style={{
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        tabIndex={-1}
+        className="glass-panel"
+        style={{
         width: '100%',
         maxWidth: '500px',
         maxHeight: '92vh',
@@ -174,7 +186,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
           }}>
             <Sprout size={24} color="#070a11" strokeWidth={2.5} />
           </div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff' }}>
+          <h2 id="auth-modal-title" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff' }}>
             {isLogin ? t('p8_auth_welcome', 'Welcome Back') : t('p8_auth_create', 'Create an Account')}
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.4rem' }}>
@@ -183,7 +195,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
         </div>
 
         {errorMessage && (
-          <div style={{
+          <div
+            role="alert"
+            aria-live="assertive"
+            style={{
             background: 'rgba(239, 68, 68, 0.15)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
             color: '#f87171',
@@ -354,7 +369,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             {!isLogin && (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Location / District</label>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_location', 'Location / District')}</label>
                   <div style={{ position: 'relative' }}>
                     <MapPin size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
@@ -379,7 +394,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
 
                 {role === 'worker' ? (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Agricultural Skills</label>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_work_type', 'Agricultural Skills')}</label>
                     <div style={{ position: 'relative' }}>
                       <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                       <input
@@ -402,7 +417,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                   </div>
                 ) : (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>Farm Details / Main Crops</label>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_farm_name', 'Farm Details / Main Crops')}</label>
                     <div style={{ position: 'relative' }}>
                       <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                       <input
