@@ -6,9 +6,6 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
-// Connect to Database
-connectDB();
-
 const app = express();
 
 const configuredOrigins = (process.env.CLIENT_URL || '')
