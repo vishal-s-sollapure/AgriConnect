@@ -11,17 +11,6 @@
   <a href="https://github.com/vishal-s-sollapure/AgriConnect"><strong>💻 GitHub Repository</strong></a>
 </p>
 
-<p align="center">
-  ![Development](https://img.shields.io/badge/Development-9%2F9%20Phases-brightgreen)
-  ![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20Vite-blue)
-  ![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-green)
-  ![Database](https://img.shields.io/badge/Database-MongoDB-47A248)
-  ![Languages](https://img.shields.io/badge/Languages-7-orange)
-  ![License](https://img.shields.io/badge/License-ISC-yellow)
-</p>
-
----
-
 ## 🌱 The Problem We're Solving
 
 Agriculture depends on timing. During sowing, transplanting, weeding and harvesting seasons, farmers often need additional workers within a limited period.
