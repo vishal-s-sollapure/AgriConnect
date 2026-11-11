@@ -34,8 +34,10 @@ const MOCK_JOBS = [
     latitude: 18.8284,
     longitude: 74.3789,
     wage: 650,
+    wageAmount: 650,
     wageType: 'daily',
     workersNeeded: 8,
+    workersRequired: 8,
     openingsCount: 8,
     durationDays: 14,
     startDate: '2026-11-20',
@@ -60,8 +62,10 @@ const MOCK_JOBS = [
     latitude: 18.1517,
     longitude: 74.5784,
     wage: 600,
+    wageAmount: 600,
     wageType: 'daily',
     workersNeeded: 5,
+    workersRequired: 5,
     openingsCount: 5,
     durationDays: 7,
     startDate: '2026-11-22',
@@ -86,8 +90,10 @@ const MOCK_JOBS = [
     latitude: 20.5539,
     longitude: 78.8394,
     wage: 620,
+    wageAmount: 620,
     wageType: 'daily',
     workersNeeded: 12,
+    workersRequired: 12,
     openingsCount: 12,
     durationDays: 20,
     startDate: '2026-11-25',
@@ -112,8 +118,10 @@ const MOCK_JOBS = [
     latitude: 18.6414,
     longitude: 72.8767,
     wage: 680,
+    wageAmount: 680,
     wageType: 'daily',
     workersNeeded: 6,
+    workersRequired: 6,
     openingsCount: 6,
     durationDays: 10,
     startDate: '2026-11-28',
@@ -132,7 +140,7 @@ const MOCK_APPLICANTS = [
   {
     _id: 'app_001',
     jobId: 'job_001',
-    workerId: {
+    worker: {
       _id: 'worker_001',
       name: 'Ramesh Kumar',
       phone: '+91 98765 43211',
@@ -142,13 +150,13 @@ const MOCK_APPLICANTS = [
     },
     status: 'accepted',
     proposedWage: 650,
-    appliedAt: '2026-11-10T10:30:00.000Z',
-    notes: 'Available immediately for full 14 days with team of 2 relatives.'
+    createdAt: '2026-11-10T10:30:00.000Z',
+    notes: 'Available immediately for full 14 days with experienced team of 2 relatives.'
   },
   {
     _id: 'app_002',
     jobId: 'job_001',
-    workerId: {
+    worker: {
       _id: 'worker_002',
       name: 'Suresh Patil',
       phone: '+91 98765 43222',
@@ -158,13 +166,13 @@ const MOCK_APPLICANTS = [
     },
     status: 'pending',
     proposedWage: 650,
-    appliedAt: '2026-11-10T14:15:00.000Z',
-    notes: 'Experienced in sugarcane cutting and loading onto trailers.'
+    createdAt: '2026-11-10T14:15:00.000Z',
+    notes: 'Specialist in mechanized and manual sugarcane cutting.'
   },
   {
     _id: 'app_003',
     jobId: 'job_001',
-    workerId: {
+    worker: {
       _id: 'worker_003',
       name: 'Sunita Shinde',
       phone: '+91 98765 43233',
@@ -174,7 +182,7 @@ const MOCK_APPLICANTS = [
     },
     status: 'pending',
     proposedWage: 650,
-    appliedAt: '2026-11-11T09:00:00.000Z',
+    createdAt: '2026-11-11T09:00:00.000Z',
     notes: 'Local agricultural worker from Shirur village.'
   }
 ];
@@ -244,7 +252,7 @@ async function main() {
   });
 
   const page = await browser.newPage();
-  // Set 3:2 ratio: 1800 x 1200
+  // Set exact 3:2 aspect ratio: 1800 x 1200
   await page.setViewport({ width: 1800, height: 1200, deviceScaleFactor: 1 });
 
   await page.setRequestInterception(true);
@@ -283,7 +291,8 @@ async function main() {
       return;
     }
 
-    if (url.includes('/applicants')) {
+    // Handlers for /jobs/:id/applications (job applications for farmer applicant review)
+    if (url.includes('/applications') && url.includes('/jobs/')) {
       req.respond({
         status: 200,
         contentType: 'application/json',
@@ -291,8 +300,18 @@ async function main() {
         body: JSON.stringify({
           success: true,
           job: MOCK_JOBS[0],
-          applicants: MOCK_APPLICANTS,
-          stats: { total: 3, pending: 2, accepted: 1, rejected: 0 }
+          applications: MOCK_APPLICANTS,
+          summary: {
+            total: 3,
+            pending: 2,
+            accepted: 1,
+            rejected: 0,
+            withdrawn: 0,
+            workersRequired: 8,
+            remainingVacancies: 7,
+            isFullyStaffed: false
+          },
+          pagination: { page: 1, limit: 10, total: 3, totalPages: 1 }
         })
       });
       return;
@@ -305,7 +324,7 @@ async function main() {
         headers,
         body: JSON.stringify({
           success: true,
-          applications: MOCK_APPLICANTS.map(a => ({
+          data: MOCK_APPLICANTS.map(a => ({
             ...a,
             job: MOCK_JOBS[0]
           })),
@@ -391,161 +410,7 @@ async function main() {
   });
 
   // ==========================================
-  // IMAGE 2: Landing Page
-  // ==========================================
-  console.log('Capturing Image 2: Landing Page...');
-  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => {
-    try { localStorage.clear(); } catch(e) {}
-    window.scrollTo(0, 0);
-  });
-  await new Promise(r => setTimeout(r, 1500));
-  await saveScreenshot(page, '02-landing-page.png');
-
-  // ==========================================
-  // IMAGE 6: Job Discovery
-  // ==========================================
-  console.log('Capturing Image 6: Job Discovery...');
-  await page.goto('http://127.0.0.1:4173/jobs', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => {
-    window.scrollTo(0, 0);
-    const searchInput = document.querySelector('input[type=\"text\"]');
-    if (searchInput) {
-      searchInput.value = 'Sugarcane Harvesting';
-      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  });
-  await new Promise(r => setTimeout(r, 1800));
-  await saveScreenshot(page, '06-job-discovery.png');
-
-  // ==========================================
-  // IMAGE 7: Location-Based Discovery (Map View)
-  // ==========================================
-  console.log('Capturing Image 7: Location-Based Discovery...');
-  await page.goto('http://127.0.0.1:4173/jobs', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => {
-    // Click map button
-    const buttons = Array.from(document.querySelectorAll('button'));
-    const mapBtn = buttons.find(b => b.innerText.includes('Map Only') || b.innerText.includes('Split View'));
-    if (mapBtn) mapBtn.click();
-    window.scrollTo(0, 0);
-  });
-  await new Promise(r => setTimeout(r, 2000));
-  await saveScreenshot(page, '07-location-discovery.png');
-
-  // ==========================================
-  // IMAGE 8: Job Application Workflow (Details)
-  // ==========================================
-  console.log('Capturing Image 8: Job Application Workflow...');
-  await page.goto('http://127.0.0.1:4173/jobs/job_001', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await new Promise(r => setTimeout(r, 1500));
-  await saveScreenshot(page, '08-job-application.png');
-
-  // ==========================================
-  // IMAGE 3: Farmer Dashboard
-  // ==========================================
-  console.log('Capturing Image 3: Farmer Dashboard...');
-  await page.evaluate((farmer) => {
-    localStorage.setItem('agriconnect_user', JSON.stringify(farmer));
-    localStorage.setItem('agri_user', JSON.stringify(farmer));
-    localStorage.setItem('agriconnect_token', 'simulated_farmer_token');
-    localStorage.setItem('agri_token', 'simulated_farmer_token');
-  }, FARMER_USER);
-  await page.goto('http://127.0.0.1:4173/farmer', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await new Promise(r => setTimeout(r, 1800));
-  await saveScreenshot(page, '03-farmer-dashboard.png');
-
-  // ==========================================
-  // IMAGE 4: Create Agricultural Job Form
-  // ==========================================
-  console.log('Capturing Image 4: Create Job Form...');
-  await page.goto('http://127.0.0.1:4173/farmer/jobs/new', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => {
-    window.scrollTo(0, 0);
-    // Fill form elements if available
-    const inputs = document.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-      const name = (input.name || input.id || input.placeholder || '').toLowerCase();
-      if (name.includes('title')) input.value = 'Sugarcane Harvesting & Bundling';
-      if (name.includes('crop')) input.value = 'Sugarcane';
-      if (name.includes('wage')) input.value = '650';
-      if (name.includes('worker') || name.includes('headcount')) input.value = '8';
-      if (name.includes('location') || name.includes('address')) input.value = 'Shirur, Pune District, Maharashtra';
-      if (name.includes('village')) input.value = 'Shirur';
-      if (name.includes('district')) input.value = 'Pune';
-      if (name.includes('state')) input.value = 'Maharashtra';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-  });
-  await new Promise(r => setTimeout(r, 1800));
-  await saveScreenshot(page, '04-create-job.png');
-
-  // ==========================================
-  // IMAGE 9: Applicant Management
-  // ==========================================
-  console.log('Capturing Image 9: Applicant Management...');
-  await page.goto('http://127.0.0.1:4173/farmer/jobs/job_001/applicants', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await new Promise(r => setTimeout(r, 1800));
-  await saveScreenshot(page, '09-applicant-management.png');
-
-  // ==========================================
-  // IMAGE 5: Worker Dashboard
-  // ==========================================
-  console.log('Capturing Image 5: Worker Dashboard...');
-  await page.evaluate((worker) => {
-    localStorage.setItem('agriconnect_user', JSON.stringify(worker));
-    localStorage.setItem('agri_user', JSON.stringify(worker));
-    localStorage.setItem('agriconnect_token', 'simulated_worker_token');
-    localStorage.setItem('agri_token', 'simulated_worker_token');
-  }, WORKER_USER);
-  await page.goto('http://127.0.0.1:4173/worker', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await new Promise(r => setTimeout(r, 1800));
-  await saveScreenshot(page, '05-worker-dashboard.png');
-
-  // ==========================================
-  // IMAGE 11: Notifications and Smart Assistance
-  // ==========================================
-  console.log('Capturing Image 11: Notifications & Assistance...');
-  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => {
-    // Open AI Assistant widget
-    const aiButton = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('AI Voice Assistant') || b.innerText.includes('Voice'));
-    if (aiButton) aiButton.click();
-    // Open Notification Bell if exists
-    const bellBtn = document.querySelector('button[aria-label*=\"notification\"], [data-testid=\"notification-bell\"]');
-    if (bellBtn) bellBtn.click();
-    window.scrollTo(0, 0);
-  });
-  await new Promise(r => setTimeout(r, 1500));
-  await saveScreenshot(page, '11-notifications-assistance.png');
-
-  // ==========================================
-  // IMAGE 10: Multilingual Accessibility Showcase
-  // ==========================================
-  console.log('Capturing Image 10: Multilingual Support...');
-  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => {
-    // Open language dropdown
-    const langSelect = document.querySelector('select') || Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('English') || b.innerText.includes('हिन्दी'));
-    if (langSelect) {
-      if (langSelect.tagName === 'SELECT') {
-        langSelect.value = 'hi';
-        langSelect.dispatchEvent(new Event('change', { bubbles: true }));
-      } else {
-        langSelect.click();
-      }
-    }
-  });
-  await new Promise(r => setTimeout(r, 1500));
-  await saveScreenshot(page, '10-multilingual-support.png');
-
-  // ==========================================
-  // IMAGE 1: AgriConnect Cover
+  // IMAGE 1: AgriConnect Cover Showcase
   // ==========================================
   console.log('Generating Image 1: AgriConnect Cover Showcase...');
   const coverHtml = `
@@ -553,7 +418,6 @@ async function main() {
   <html>
   <head>
     <meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
@@ -561,8 +425,8 @@ async function main() {
         height: 1200px;
         background: radial-gradient(circle at 50% 20%, #0d2e22 0%, #06140e 55%, #030805 100%);
         color: #f8fafc;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        padding: 70px 90px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        padding: 65px 85px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -573,7 +437,7 @@ async function main() {
         position: absolute;
         width: 700px;
         height: 700px;
-        background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 70%);
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0) 70%);
         top: -150px;
         right: -100px;
         border-radius: 50%;
@@ -594,7 +458,6 @@ async function main() {
         margin-bottom: 20px;
       }
       .header-title {
-        font-family: 'Outfit', sans-serif;
         font-size: 68px;
         font-weight: 800;
         line-height: 1.15;
@@ -615,10 +478,10 @@ async function main() {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 24px;
-        margin-top: 40px;
+        margin-top: 36px;
       }
       .pillar-card {
-        background: rgba(15, 23, 42, 0.65);
+        background: rgba(15, 23, 42, 0.7);
         border: 1px solid rgba(52, 211, 153, 0.22);
         border-radius: 18px;
         padding: 26px 24px;
@@ -629,7 +492,6 @@ async function main() {
         margin-bottom: 12px;
       }
       .pillar-title {
-        font-family: 'Outfit', sans-serif;
         font-size: 20px;
         font-weight: 700;
         color: #e2e8f0;
@@ -641,7 +503,7 @@ async function main() {
         line-height: 1.5;
       }
       .showcase-strip {
-        background: rgba(11, 31, 23, 0.7);
+        background: rgba(11, 31, 23, 0.75);
         border: 1px solid rgba(16, 185, 129, 0.3);
         border-radius: 22px;
         padding: 24px 34px;
@@ -659,7 +521,6 @@ async function main() {
         flex-direction: column;
       }
       .stat-num {
-        font-family: 'Outfit', sans-serif;
         font-size: 32px;
         font-weight: 800;
         color: #34d399;
@@ -676,8 +537,8 @@ async function main() {
         gap: 12px;
       }
       .tech-pill {
-        background: rgba(15, 23, 42, 0.8);
-        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(148, 163, 184, 0.25);
         padding: 8px 16px;
         border-radius: 10px;
         font-size: 14px;
@@ -768,11 +629,166 @@ async function main() {
   </body>
   </html>
   `;
-  await page.setContent(coverHtml, { waitUntil: 'networkidle2' });
+  await page.setContent(coverHtml, { waitUntil: 'domcontentloaded' });
   await saveScreenshot(page, '01-agriconnect-cover.png');
 
   // ==========================================
-  // IMAGE 12: Technology Architecture
+  // IMAGE 2: Landing Page
+  // ==========================================
+  console.log('Capturing Image 2: Landing Page...');
+  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => {
+    try { localStorage.clear(); } catch(e) {}
+    window.scrollTo(0, 0);
+  });
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '02-landing-page.png');
+
+  // ==========================================
+  // IMAGE 3: Farmer Dashboard
+  // ==========================================
+  console.log('Capturing Image 3: Farmer Dashboard...');
+  await page.evaluate((farmer) => {
+    localStorage.setItem('agriconnect_user', JSON.stringify(farmer));
+    localStorage.setItem('agri_user', JSON.stringify(farmer));
+    localStorage.setItem('agriconnect_token', 'simulated_farmer_token');
+    localStorage.setItem('agri_token', 'simulated_farmer_token');
+  }, FARMER_USER);
+  await page.goto('http://127.0.0.1:4173/farmer', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '03-farmer-dashboard.png');
+
+  // ==========================================
+  // IMAGE 4: Create Agricultural Job Form
+  // ==========================================
+  console.log('Capturing Image 4: Create Job Form...');
+  await page.goto('http://127.0.0.1:4173/farmer/jobs/new', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    // Fill title input triggering React's synthetic value setter
+    const titleInput = document.querySelector('input[placeholder*="Harvesting"]');
+    if (titleInput) {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      nativeSetter.call(titleInput, 'Sugarcane Harvesting & Bundling');
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '04-create-job.png');
+
+  // ==========================================
+  // IMAGE 5: Worker Dashboard
+  // ==========================================
+  console.log('Capturing Image 5: Worker Dashboard...');
+  await page.evaluate((worker) => {
+    localStorage.setItem('agriconnect_user', JSON.stringify(worker));
+    localStorage.setItem('agri_user', JSON.stringify(worker));
+    localStorage.setItem('agriconnect_token', 'simulated_worker_token');
+    localStorage.setItem('agri_token', 'simulated_worker_token');
+  }, WORKER_USER);
+  await page.goto('http://127.0.0.1:4173/worker', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '05-worker-dashboard.png');
+
+  // ==========================================
+  // IMAGE 6: Job Discovery
+  // ==========================================
+  console.log('Capturing Image 6: Job Discovery...');
+  await page.goto('http://127.0.0.1:4173/jobs', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    const searchInput = document.querySelector('input[type=\"text\"]');
+    if (searchInput) {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      nativeSetter.call(searchInput, 'Sugarcane Harvesting');
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '06-job-discovery.png');
+
+  // ==========================================
+  // IMAGE 7: Location-Based Discovery (Map View)
+  // ==========================================
+  console.log('Capturing Image 7: Location-Based Discovery...');
+  await page.goto('http://127.0.0.1:4173/jobs', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => {
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const mapBtn = buttons.find(b => b.innerText.includes('Map Only'));
+    if (mapBtn) mapBtn.click();
+    window.scrollTo(0, 0);
+  });
+  await new Promise(r => setTimeout(r, 1800));
+  await saveScreenshot(page, '07-location-discovery.png');
+
+  // ==========================================
+  // IMAGE 8: Job Application Workflow (Details)
+  // ==========================================
+  console.log('Capturing Image 8: Job Application Workflow...');
+  await page.goto('http://127.0.0.1:4173/jobs/job_001', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '08-job-application.png');
+
+  // ==========================================
+  // IMAGE 9: Applicant Management
+  // ==========================================
+  console.log('Capturing Image 9: Applicant Management...');
+  await page.evaluate((farmer) => {
+    localStorage.setItem('agriconnect_user', JSON.stringify(farmer));
+    localStorage.setItem('agri_user', JSON.stringify(farmer));
+    localStorage.setItem('agriconnect_token', 'simulated_farmer_token');
+    localStorage.setItem('agri_token', 'simulated_farmer_token');
+  }, FARMER_USER);
+  await page.goto('http://127.0.0.1:4173/farmer/jobs/job_001/applicants', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise(r => setTimeout(r, 1800));
+  await saveScreenshot(page, '09-applicant-management.png');
+
+  // ==========================================
+  // IMAGE 10: Multilingual Accessibility Showcase
+  // ==========================================
+  console.log('Capturing Image 10: Multilingual Support...');
+  await page.evaluate(() => {
+    localStorage.setItem('agriconnect_lang', 'mr');
+    window.scrollTo(0, 0);
+  });
+  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '10-multilingual-support.png');
+  // Reset language to English
+  await page.evaluate(() => {
+    localStorage.setItem('agriconnect_lang', 'en');
+  });
+
+  // ==========================================
+  // IMAGE 11: Notifications and Smart Assistance
+  // ==========================================
+  console.log('Capturing Image 11: Notifications & Assistance...');
+  await page.evaluate((farmer) => {
+    localStorage.setItem('agriconnect_user', JSON.stringify(farmer));
+    localStorage.setItem('agri_user', JSON.stringify(farmer));
+    localStorage.setItem('agriconnect_token', 'simulated_farmer_token');
+    localStorage.setItem('agri_token', 'simulated_farmer_token');
+  }, FARMER_USER);
+  await page.goto('http://127.0.0.1:4173/farmer', { waitUntil: 'networkidle2' });
+  await page.evaluate(() => {
+    // Open Notification Bell dropdown
+    const bellBtn = document.querySelector('button[aria-label*=\"notification\"], button svg.lucide-bell')?.closest('button');
+    if (bellBtn) bellBtn.click();
+    // Open AI Assistant widget
+    const aiButton = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('AI Voice Assistant') || b.innerText.includes('Voice'));
+    if (aiButton) aiButton.click();
+    window.scrollTo(0, 0);
+  });
+  await new Promise(r => setTimeout(r, 1500));
+  await saveScreenshot(page, '11-notifications-assistance.png');
+
+  // ==========================================
+  // IMAGE 12: Technology Architecture Infographic
   // ==========================================
   console.log('Generating Image 12: Technology Architecture...');
   const archHtml = `
@@ -780,7 +796,6 @@ async function main() {
   <html>
   <head>
     <meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
@@ -788,7 +803,7 @@ async function main() {
         height: 1200px;
         background: #06110c;
         color: #f8fafc;
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         padding: 55px 75px;
         display: flex;
         flex-direction: column;
@@ -808,7 +823,6 @@ async function main() {
         margin-bottom: 12px;
       }
       .arch-title {
-        font-family: 'Outfit', sans-serif;
         font-size: 44px;
         font-weight: 800;
         background: linear-gradient(135deg, #ffffff 40%, #86efac 100%);
@@ -819,7 +833,7 @@ async function main() {
       .arch-subtitle {
         font-size: 19px;
         color: #94a3b8;
-        margin-bottom: 30px;
+        margin-bottom: 28px;
       }
       .grid-container {
         display: grid;
@@ -827,8 +841,8 @@ async function main() {
         gap: 24px;
       }
       .tier-card {
-        background: rgba(15, 23, 42, 0.7);
-        border: 1px solid rgba(52, 211, 153, 0.2);
+        background: rgba(15, 23, 42, 0.75);
+        border: 1px solid rgba(52, 211, 153, 0.22);
         border-radius: 18px;
         padding: 24px;
         display: flex;
@@ -847,7 +861,6 @@ async function main() {
         font-size: 28px;
       }
       .tier-name {
-        font-family: 'Outfit', sans-serif;
         font-size: 22px;
         font-weight: 700;
         color: #34d399;
@@ -898,7 +911,6 @@ async function main() {
         margin-top: 24px;
       }
       .roadmap-title {
-        font-family: 'Outfit', sans-serif;
         font-size: 18px;
         font-weight: 700;
         color: #34d399;
@@ -1091,7 +1103,7 @@ async function main() {
   </body>
   </html>
   `;
-  await page.setContent(archHtml, { waitUntil: 'networkidle2' });
+  await page.setContent(archHtml, { waitUntil: 'domcontentloaded' });
   await saveScreenshot(page, '12-technology-architecture.png');
 
   await browser.close();
