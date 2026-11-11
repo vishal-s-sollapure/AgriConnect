@@ -266,8 +266,23 @@ async function main() {
     const headers = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': '*'
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, *'
     };
+
+    if (req.method() === 'OPTIONS') {
+      req.respond({ status: 204, headers });
+      return;
+    }
+
+    if (url.includes('/api/notifications/unread-count')) {
+      req.respond({
+        status: 200,
+        contentType: 'application/json',
+        headers,
+        body: JSON.stringify({ success: true, unreadCount: 1 })
+      });
+      return;
+    }
 
     if (url.includes('/api/jobs/my-jobs')) {
       req.respond({
