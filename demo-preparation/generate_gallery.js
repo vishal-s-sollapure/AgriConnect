@@ -394,11 +394,11 @@ async function main() {
   // IMAGE 2: Landing Page
   // ==========================================
   console.log('Capturing Image 2: Landing Page...');
-  await page.evaluate(() => {
-    localStorage.clear();
-  });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle2' });
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate(() => {
+    try { localStorage.clear(); } catch(e) {}
+    window.scrollTo(0, 0);
+  });
   await new Promise(r => setTimeout(r, 1500));
   await saveScreenshot(page, '02-landing-page.png');
 
