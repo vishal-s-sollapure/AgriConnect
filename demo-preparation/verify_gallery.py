@@ -27,3 +27,4 @@ for f in files:
 
 print("-" * 80)
 print(f"All images meet 3:2 ratio and < 5MB criteria: {all_valid}")
+

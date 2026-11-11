@@ -788,18 +788,20 @@ async function main() {
     localStorage.setItem('agri_user', JSON.stringify(farmer));
     localStorage.setItem('agriconnect_token', 'simulated_farmer_token');
     localStorage.setItem('agri_token', 'simulated_farmer_token');
+    localStorage.setItem('agriconnect_lang', 'en');
   }, FARMER_USER);
   await page.goto('http://127.0.0.1:4173/farmer', { waitUntil: 'networkidle2' });
+  await new Promise(r => setTimeout(r, 1200));
   await page.evaluate(() => {
     // Open Notification Bell dropdown
-    const bellBtn = document.querySelector('button[aria-label*=\"notification\"], button svg.lucide-bell')?.closest('button');
+    const bellBtn = document.querySelector('button[aria-label*="notification"], button[aria-label*="Notification"], button svg.lucide-bell')?.closest('button');
     if (bellBtn) bellBtn.click();
     // Open AI Assistant widget
     const aiButton = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('AI Voice Assistant') || b.innerText.includes('Voice'));
     if (aiButton) aiButton.click();
     window.scrollTo(0, 0);
   });
-  await new Promise(r => setTimeout(r, 1500));
+  await new Promise(r => setTimeout(r, 1800));
   await saveScreenshot(page, '11-notifications-assistance.png');
 
   // ==========================================
