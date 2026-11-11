@@ -10,11 +10,12 @@ const app = express();
 
 const configuredOrigins = (process.env.CLIENT_URL || '')
   .split(',')
-  .map(origin => origin.trim())
+  .map(origin => origin.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 const allowedOrigins = [
   ...new Set([
     ...configuredOrigins,
+    'https://agri-connect-gamma-kohl.vercel.app',
     ...(process.env.NODE_ENV === 'production'
       ? []
       : ['http://localhost:5173', 'http://127.0.0.1:5173'])
@@ -24,13 +25,24 @@ const allowedOrigins = [
 // Middleware
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const cleanOrigin = origin.replace(/\/+$/, '');
+    const isAllowed = allowedOrigins.includes(cleanOrigin)
+      || cleanOrigin.endsWith('.vercel.app')
+      || (process.env.NODE_ENV !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin));
+
+    if (isAllowed) {
       callback(null, true);
       return;
     }
 
     callback(null, false);
-  }
+  },
+  credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

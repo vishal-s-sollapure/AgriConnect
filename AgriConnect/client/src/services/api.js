@@ -1,5 +1,16 @@
 // Centralized API service configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+function resolveApiBaseUrl() {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+  if (!envUrl) {
+    return 'http://localhost:5000/api';
+  }
+  // Strip trailing slashes
+  const sanitized = envUrl.replace(/\/+$/, '');
+  // If it already ends with /api, use it; otherwise append /api
+  return sanitized.endsWith('/api') ? sanitized : `${sanitized}/api`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 /**
  * Reusable fetch wrapper with automatic JWT Authorization header attachment
@@ -13,15 +24,21 @@ export async function apiRequest(endpoint, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (networkError) {
+    throw new Error('Unable to connect to backend server. The service may be waking up (Render free tier) or check your connection.');
+  }
 
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = new Error(data.message || data.error || 'API request failed');
+    const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
     error.status = response.status;
     error.data = data;
     throw error;
