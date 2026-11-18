@@ -1,9 +1,10 @@
 import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AgriProvider, useAgri } from './context/AgriContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/common/Navbar';
+import ErrorBoundary from './components/common/ErrorBoundary';
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 const FarmerDashboard = lazy(() => import('./pages/farmer/FarmerDashboard'));
 const CreateJob = lazy(() => import('./pages/farmer/CreateJob'));
@@ -23,6 +24,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 function MainApp() {
   const { currentUser: agriUser } = useAgri();
   const { currentUser: authUser } = useAuth();
+  const { t } = useLanguage();
   
   const currentUser = authUser || agriUser;
 
@@ -46,13 +48,19 @@ function MainApp() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+      {/* WCAG 2.4.1 Keyboard Accessible Skip Link */}
+      <a href="#main-content" className="skip-link">
+        {t('p8_skip_to_content', 'Skip to main content')}
+      </a>
+
       {/* Navigation Header */}
       <Navbar onOpenAuth={handleOpenAuth} />
 
       {/* Main Content Router */}
-      <main style={{ flex: 1 }}>
-        <Suspense fallback={<div className="container" style={{ padding: '4rem 1rem', color: '#cbd5e1' }}>Loading page…</div>}>
-        <Routes>
+      <main id="main-content" tabIndex="-1" style={{ flex: 1, outline: 'none' }}>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="container" style={{ padding: '4rem 1rem', color: '#cbd5e1' }}>Loading page…</div>}>
+            <Routes>
           {/* Home / Landing Page */}
           <Route 
             path="/" 
@@ -159,6 +167,7 @@ function MainApp() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
+        </ErrorBoundary>
       </main>
 
       {/* Footer */}

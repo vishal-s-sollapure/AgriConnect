@@ -162,10 +162,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_name', 'Full name')}</label>
+              <label htmlFor="profile-name" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_name', 'Full name')}</label>
               <div style={{ position: 'relative' }}>
                 <User size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
+                  id="profile-name"
                   type="text"
                   required
                   value={formData.name}
@@ -184,10 +185,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_phone', 'Phone number')}</label>
+              <label htmlFor="profile-phone" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_phone', 'Phone number')}</label>
               <div style={{ position: 'relative' }}>
                 <Phone size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
+                  id="profile-phone"
                   type="text"
                   required
                   value={formData.phone}
@@ -206,10 +208,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_location', 'Location / Region')}</label>
+              <label htmlFor="profile-location" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_location', 'Location / Region')}</label>
               <div style={{ position: 'relative' }}>
                 <MapPin size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
+                  id="profile-location"
                   type="text"
                   required
                   value={formData.location}
@@ -230,10 +233,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
             {currentUser.role === 'worker' ? (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_work_type', 'Skills & Expertise')}</label>
+                  <label htmlFor="profile-skills" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_work_type', 'Skills & Expertise')}</label>
                   <div style={{ position: 'relative' }}>
                     <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
+                      id="profile-skills"
                       type="text"
                       value={formData.skills}
                       onChange={(e) => setFormData({...formData, skills: e.target.value})}
@@ -252,10 +256,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_duration', 'Work Experience')}</label>
+                  <label htmlFor="profile-experience" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_duration', 'Work Experience')}</label>
                   <div style={{ position: 'relative' }}>
                     <Award size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
+                      id="profile-experience"
                       type="text"
                       value={formData.experience}
                       onChange={(e) => setFormData({...formData, experience: e.target.value})}
@@ -276,10 +281,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
             ) : (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_farm_name', 'Farm Details & Main Crops')}</label>
+                  <label htmlFor="profile-farm-details" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_farm_name', 'Farm Details & Main Crops')}</label>
                   <div style={{ position: 'relative' }}>
                     <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
+                      id="profile-farm-details"
                       type="text"
                       value={formData.farmDetails}
                       onChange={(e) => setFormData({...formData, farmDetails: e.target.value})}
@@ -298,10 +304,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_description', 'Farm Size')}</label>
+                  <label htmlFor="profile-farm-size" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_description', 'Farm Size')}</label>
                   <div style={{ position: 'relative' }}>
                     <Award size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
+                      id="profile-farm-size"
                       type="text"
                       value={formData.farmSize}
                       onChange={(e) => setFormData({...formData, farmSize: e.target.value})}

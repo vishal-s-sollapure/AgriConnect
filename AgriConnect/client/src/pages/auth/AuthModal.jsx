@@ -270,10 +270,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
 
             {!isLogin && (
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_name', 'Full Name')}</label>
+                <label htmlFor="auth-fullname" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_name', 'Full Name')}</label>
                 <div style={{ position: 'relative' }}>
                   <User size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                   <input
+                    id="auth-fullname"
                     type="text"
                     required
                     placeholder="e.g. Vishal Sollapure"
@@ -295,10 +296,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             )}
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_email', 'Email Address')}</label>
+              <label htmlFor="auth-email" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_email', 'Email Address')}</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
+                  id="auth-email"
                   type="email"
                   required
                   placeholder="name@example.com"
@@ -319,10 +321,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_phone', 'Mobile Phone Number')}</label>
+              <label htmlFor="auth-phone" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_phone', 'Mobile Phone Number')}</label>
               <div style={{ position: 'relative' }}>
                 <Phone size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
+                  id="auth-phone"
                   type="text"
                   required
                   placeholder="e.g. 7795511748"
@@ -343,10 +346,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_password', 'Password')}</label>
+              <label htmlFor="auth-password" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_password', 'Password')}</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                 <input
+                  id="auth-password"
                   type="password"
                   required
                   placeholder="••••••••"
@@ -369,10 +373,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
             {!isLogin && (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_location', 'Location / District')}</label>
+                  <label htmlFor="auth-location" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_auth_location', 'Location / District')}</label>
                   <div style={{ position: 'relative' }}>
                     <MapPin size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input
+                      id="auth-location"
                       type="text"
                       required
                       placeholder="e.g. Anand, Gujarat"
@@ -394,10 +399,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
 
                 {role === 'worker' ? (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_work_type', 'Agricultural Skills')}</label>
+                    <label htmlFor="auth-skills" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_work_type', 'Agricultural Skills')}</label>
                     <div style={{ position: 'relative' }}>
                       <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                       <input
+                        id="auth-skills"
                         type="text"
                         placeholder="e.g. Harvesting, Cotton Picking, Paddy Sowing"
                         value={formData.skills}
@@ -417,10 +423,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                   </div>
                 ) : (
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_farm_name', 'Farm Details / Main Crops')}</label>
+                    <label htmlFor="auth-farm-details" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>{t('p8_farm_name', 'Farm Details / Main Crops')}</label>
                     <div style={{ position: 'relative' }}>
                       <Briefcase size={18} color="#64748b" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
                       <input
+                        id="auth-farm-details"
                         type="text"
                         placeholder="e.g. 15 Acres Wheat & Rice Farm"
                         value={formData.farmDetails}
@@ -428,6 +435,19 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                         style={{
                           width: '100%',
                           padding: '0.75rem 1rem 0.75rem 2.6rem',
+                          background: 'rgba(30, 41, 59, 0.8)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '0.6rem',
+                          color: '#ffffff',
+                          fontSize: '0.92rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
                           background: 'rgba(30, 41, 59, 0.8)',
                           border: '1px solid rgba(255, 255, 255, 0.1)',
                           borderRadius: '0.6rem',

@@ -37,6 +37,30 @@ textarea {
   outline-offset: 3px;
 }
 
+/* Accessibility: WCAG 2.4.1 Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -120px;
+  left: 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  z-index: 99999;
+  text-decoration: none;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(16, 185, 129, 0.4);
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 1rem;
+  outline: 3px solid #a3e635;
+  outline-offset: 3px;
+}
+
 .btn-primary,
 .btn-secondary,
 .mobile-toggle {

@@ -538,6 +538,7 @@ export const translations = {
 const phase8Translations = {
   en: {
     p8_language: 'Language',
+    p8_skip_to_content: 'Skip to main content',
     p8_menu: 'Open navigation menu',
     p8_close_menu: 'Close navigation menu',
     p8_how_it_works: 'How It Works',
@@ -652,6 +653,7 @@ const phase8Translations = {
   },
   kn: {
     p8_language: 'ಭಾಷೆ',
+    p8_skip_to_content: 'ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ',
     p8_menu: 'ನ್ಯಾವಿಗೇಶನ್ ಮೆನು ತೆರೆಯಿರಿ',
     p8_close_menu: 'ನ್ಯಾವಿಗೇಶನ್ ಮೆನು ಮುಚ್ಚಿರಿ',
     p8_how_it_works: 'ಇದು ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ',
@@ -766,6 +768,7 @@ const phase8Translations = {
   },
   hi: {
     p8_language: 'भाषा',
+    p8_skip_to_content: 'मुख्य सामग्री पर जाएं',
     p8_menu: 'नेविगेशन मेनू खोलें',
     p8_close_menu: 'नेविगेशन मेनू बंद करें',
     p8_how_it_works: 'यह कैसे काम करता है',
