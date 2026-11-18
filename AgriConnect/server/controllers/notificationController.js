@@ -59,7 +59,7 @@ exports.markNotificationRead = async (req, res) => {
     const notification = await Notification.findOneAndUpdate(
       { _id: req.params.id, recipient: req.user._id, readAt: null },
       { $set: { readAt: new Date() } },
-      { new: true }
+      { returnDocument: 'after' }
     ).select('type titleKey messageKey data readAt createdAt');
     if (notification) return res.status(200).json({ success: true, notification });
 
