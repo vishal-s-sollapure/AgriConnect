@@ -23,6 +23,14 @@ const allowedOrigins = [
 ];
 
 // Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 app.use(cors({
   origin(origin, callback) {
     if (!origin) {
@@ -59,6 +67,26 @@ app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+
+// Centralized 404 handler for undefined routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API endpoint '${req.originalUrl}' not found.`
+  });
+});
+
+// Centralized global error handling middleware
+app.use((err, req, res, next) => {
+  console.error('[AgriConnect Server Error]:', err.message || err);
+  const status = err.statusCode || (res.statusCode >= 400 ? res.statusCode : 500);
+  res.status(status).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' && status === 500
+      ? 'An internal server error occurred.'
+      : err.message || 'Internal server error'
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 

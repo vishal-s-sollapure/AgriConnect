@@ -448,19 +448,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                 )}
               </>
             )}
-                          background: 'rgba(30, 41, 59, 0.8)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '0.6rem',
-                          color: '#ffffff',
-                          fontSize: '0.92rem',
-                          outline: 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
 
             <button
               type="submit"
