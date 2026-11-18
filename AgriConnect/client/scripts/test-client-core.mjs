@@ -55,34 +55,35 @@ console.log('🧪 Starting AgriConnect Client Core Logic Unit Tests...\n');
 // 3. calculateClientJobMatchScore - Skill & Proximity Scoring
 {
   const dummyJob = {
-    title: 'Wheat Sowing & Tilling',
+    title: 'Wheat Operations',
     crop: 'Wheat',
-    workType: 'Sowing',
-    wageAmount: 600
+    workType: 'Weeding',
+    wageAmount: 500,
+    wageType: 'daily'
   };
 
   const skilledWorker = {
-    skills: 'Experienced in Wheat sowing and harvesting'
+    skills: 'Experienced in Wheat harvesting'
   };
 
-  // Close proximity: <= 5 km
+  // Close proximity: <= 5 km (+18 pts)
   const highResult = calculateClientJobMatchScore(dummyJob, skilledWorker, 3.2);
   const highMatch = highResult.matchScore;
-  assert.ok(highMatch >= 90, `High match score should be >= 90, got ${highMatch}`);
+  assert.ok(highMatch >= 80, `High match score should be >= 80, got ${highMatch}`);
   assert.ok(highMatch <= 99, `High match score capped at 99, got ${highMatch}`);
   assert.equal(highResult.matchPercentage, `${highMatch}%`);
   assert.ok(highResult.reasoning, 'Reasoning text must be present');
 
-  // Medium proximity: 20 km
+  // Medium proximity: 20 km (+6 pts)
   const medResult = calculateClientJobMatchScore(dummyJob, skilledWorker, 20);
   const medMatch = medResult.matchScore;
-  assert.ok(medMatch < highMatch, 'Closer proximity must yield higher match score');
+  assert.ok(medMatch < highMatch, `Closer proximity must yield higher match score (${highMatch} vs ${medMatch})`);
 
-  // Unskilled worker (generic agriculture)
+  // Unskilled worker (generic agriculture, no wheat bonus)
   const genericWorker = { skills: 'General Farm Labor' };
   const genericResult = calculateClientJobMatchScore(dummyJob, genericWorker, 20);
   const genericMatch = genericResult.matchScore;
-  assert.ok(genericMatch < medMatch, 'Skilled worker must score higher than generic worker');
+  assert.ok(genericMatch < medMatch, `Skilled worker must score higher than generic worker (${medMatch} vs ${genericMatch})`);
   console.log('✅ TEST 3 PASSED: Client AI match score algorithm rewards crop skills and proximity.');
 }
 

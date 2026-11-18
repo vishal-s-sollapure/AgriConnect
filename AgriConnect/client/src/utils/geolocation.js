@@ -21,6 +21,9 @@ const REGIONAL_COORDINATES = {
 };
 
 export function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null || lat1 === '' || lon1 === '' || lat2 === '' || lon2 === '') {
+    return null;
+  }
   const coordinates = [lat1, lon1, lat2, lon2].map(Number);
   if (!coordinates.every(Number.isFinite)) return null;
   const [latitude1, longitude1, latitude2, longitude2] = coordinates;
