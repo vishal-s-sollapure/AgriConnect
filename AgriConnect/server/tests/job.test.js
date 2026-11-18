@@ -45,7 +45,7 @@ function createMockReqRes({ user, body = {}, params = {}, query = {} } = {}) {
 async function runTests() {
   console.log('🧪 Starting AgriConnect Phase 3 Complete Test Suite...\n');
 
-  const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/agriconnect_test';
+  const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/agriconnect_test';
 
   try {
     await mongoose.connect(MONGO_URI);
