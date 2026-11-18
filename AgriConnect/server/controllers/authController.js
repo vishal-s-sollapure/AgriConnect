@@ -81,8 +81,13 @@ exports.registerUser = async (req, res) => {
       profileImage
     } = req.body;
 
-    // Required fields check
-    if (!name || !email || !password || !phone || !role || !location) {
+    // Required fields check with strict string type validation
+    if (
+      !name || !email || !password || !phone || !role || !location ||
+      typeof name !== 'string' || typeof email !== 'string' ||
+      typeof password !== 'string' || typeof phone !== 'string' ||
+      typeof role !== 'string' || typeof location !== 'string'
+    ) {
       return res.status(400).json({
         success: false,
         message: 'Please fill in all required fields: name, email, phone, password, role, and location.'
@@ -204,7 +209,7 @@ exports.loginUser = async (req, res) => {
 
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       return res.status(400).json({
         success: false,
         message: 'Please provide both email and password.'
